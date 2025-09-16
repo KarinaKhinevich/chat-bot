@@ -26,7 +26,7 @@ async def home(request: Request) -> HTMLResponse:
     Returns:
         HTMLResponse: Rendered home page template
     """
-    return templates.TemplateResponse("home.html", {"request": request})
+    return templates.TemplateResponse(request, "home.html")
 
 
 @router.get(
