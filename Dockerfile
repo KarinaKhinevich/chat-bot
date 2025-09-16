@@ -13,7 +13,7 @@ RUN poetry config virtualenvs.create false \
     && poetry install --no-root --no-interaction --no-ansi
 
 # Copy the rest of the application
-COPY ./chat_bot ./chat_bot
+COPY . ./chat_bot
 
 # Expose port
 EXPOSE 8000
