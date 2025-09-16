@@ -1,0 +1,10 @@
+version: '3.8'
+services:
+  app:
+    build: .
+    container_name: chat-bot-app
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./chat_bot:/chat_bot/chat_bot
+    restart: unless-stopped
