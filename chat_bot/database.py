@@ -8,7 +8,7 @@ from sqlalchemy.pool import StaticPool
 from contextlib import contextmanager
 from typing import Generator
 
-from chat_bot.config.settings import DBSettings
+from chat_bot.config import DBSettings
 from chat_bot.models import Base
 
 # Initialize database settings

@@ -25,7 +25,7 @@ class Document(Base):
     file_size = Column(Integer, nullable=False)
     document_type = Column(SQLEnum(DocumentTypeEnum), nullable=False)
     content = Column(LargeBinary, nullable=False)  # Store file content as binary
-    summary = Column(Text, nullable=False)  # Store generated document summary
+    summary = Column(Text, nullable=True, default="")  # Store generated document summary
     mime_type = Column(String(100), nullable=False)
     upload_timestamp = Column(DateTime, default=datetime.utcnow, nullable=False)
     
