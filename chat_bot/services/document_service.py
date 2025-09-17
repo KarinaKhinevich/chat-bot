@@ -14,8 +14,6 @@ from chat_bot.core import DocumentTypeEnum
 from chat_bot.models import Document
 from chat_bot.schemas import DocumentUploadResponse
 
-from .openai_service import summarize_document
-
 logger = logging.getLogger(__name__)
 
 
@@ -26,7 +24,7 @@ class DocumentService:
         self.db = db
 
     async def create_document(
-        self, file: UploadFile, document_type: DocumentTypeEnum
+        self, file: UploadFile, document_type: DocumentTypeEnum, summary: str
     ) -> DocumentUploadResponse:
         """
         Create a new document in the database.
@@ -44,14 +42,6 @@ class DocumentService:
         try:
             # Read file content
             content = await file.read()
-
-            # Generate summary using OpenAI (with fallback)
-            try:
-                summary = await summarize_document(content)
-            except Exception as e:
-                # If summary generation fails, use empty string
-                summary = ""
-                logger.warning(f"Failed to generate summary: {str(e)}")
 
             # Reset file pointer for size calculation
             await file.seek(0)

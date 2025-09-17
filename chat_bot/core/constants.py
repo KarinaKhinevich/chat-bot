@@ -1,4 +1,4 @@
-from chat_bot.core import DocumentTypeEnum
+from .enums import DocumentTypeEnum
 
 # Document configuration
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB

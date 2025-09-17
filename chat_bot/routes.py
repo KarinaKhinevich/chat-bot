@@ -8,10 +8,11 @@ from sqlalchemy.orm import Session
 
 from chat_bot.core import DocumentTypeEnum
 from chat_bot.database import create_tables, get_db
+from chat_bot.document_processing import DocumentParser
 from chat_bot.schemas import (DocumentInfo, DocumentListResponse,
                               DocumentUploadError, DocumentUploadResponse,
                               HealthCheck)
-from chat_bot.services import DocumentService
+from chat_bot.services import DocumentService, summarize_document
 from chat_bot.utils import validate_file
 
 # Configure logging
@@ -21,6 +22,8 @@ logger = logging.getLogger("uvicorn.error")
 # Initialize router and dependencies
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
+
+document_parser = DocumentParser()
 
 # Ensure database tables exist on startup
 create_tables()
@@ -141,17 +144,21 @@ async def upload_document(
     try:
         # Validate the file
         document_type = validate_file(file)
+        logger.info(f"File type check {file}")
+        # Parse the document to extract content and metadata
+        page_content, metadata = await document_parser.parse(file, document_type)
 
-        # Convert schema enum to model enum
-        model_document_type = (
-            DocumentTypeEnum.PDF
-            if document_type.value == "pdf"
-            else DocumentTypeEnum.TXT
-        )
+        # Generate summary using OpenAI (with fallback)
+        try:
+            summary = await summarize_document(page_content)
+        except Exception as e:
+            # If summary generation fails, use empty string
+            summary = ""
+            logger.warning(f"Failed to generate summary: {str(e)}")
 
         # Create document service and save to database
         document_service = DocumentService(db)
-        result = await document_service.create_document(file, model_document_type)
+        result = await document_service.create_document(file, document_type, summary)
 
         # Log the upload
         logger.info(f"Document uploaded to database: {file.filename}")
