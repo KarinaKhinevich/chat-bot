@@ -35,6 +35,13 @@ class OpenAISettings(BaseSettings):
     class Config:
         env_prefix = "OPENAI_"
 
+# Chunking settings
+class ChunkingSettings(BaseSettings):
+    STRATEGY: str = "semantic"  # Options: 'general', 'semantic'
+    MODEL_NAME: str = "text-embedding-3-small" 
+
+    class Config:
+        env_prefix = "CHUNKING_"
 
 LOGGING_CONFIG = {
     "version": 1,

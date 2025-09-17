@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from chat_bot.core import DocumentTypeEnum
 from chat_bot.database import create_tables, get_db
-from chat_bot.document_processing import DocumentParser
+from chat_bot.document_processing import DocumentParser, DocumentChunker
 from chat_bot.schemas import (DocumentInfo, DocumentListResponse,
                               DocumentUploadError, DocumentUploadResponse,
                               HealthCheck)
@@ -24,6 +24,7 @@ router = APIRouter()
 templates = Jinja2Templates(directory="templates")
 
 document_parser = DocumentParser()
+document_chunker = DocumentChunker()
 
 # Ensure database tables exist on startup
 create_tables()
@@ -156,6 +157,7 @@ async def upload_document(
             summary = ""
             logger.warning(f"Failed to generate summary: {str(e)}")
 
+        chunks = document_chunker.index_document(page_content, metadata)
         # Create document service and save to database
         document_service = DocumentService(db)
         result = await document_service.create_document(file, document_type, summary)
