@@ -2,6 +2,6 @@
 Configuration package.
 """
 
-from .settings import OpenAISettings, DBSettings
+from .settings import DBSettings, OpenAISettings
 
 __all__ = ["OpenAISettings", "DBSettings"]

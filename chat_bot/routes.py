@@ -6,8 +6,8 @@ from fastapi.responses import HTMLResponse, Response
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
-from chat_bot.database import create_tables, get_db
 from chat_bot.core import DocumentTypeEnum
+from chat_bot.database import create_tables, get_db
 from chat_bot.schemas import (DocumentInfo, DocumentListResponse,
                               DocumentUploadError, DocumentUploadResponse,
                               HealthCheck)
@@ -42,7 +42,7 @@ async def home(request: Request, db: Session = Depends(get_db)) -> HTMLResponse:
         # Get documents from database
         document_service = DocumentService(db)
         documents = document_service.get_documents()
-        
+
         # Get document info for template
         document_list = [
             {
@@ -54,20 +54,14 @@ async def home(request: Request, db: Session = Depends(get_db)) -> HTMLResponse:
             }
             for doc in documents
         ]
-        
+
         return templates.TemplateResponse(
-            request, 
-            "home.html", 
-            {"documents": document_list}
+            request, "home.html", {"documents": document_list}
         )
     except Exception as e:
         logger.error(f"Error fetching documents for home page: {str(e)}")
         # Fallback to empty list if there's an error
-        return templates.TemplateResponse(
-            request, 
-            "home.html", 
-            {"documents": []}
-        )
+        return templates.TemplateResponse(request, "home.html", {"documents": []})
 
 
 @router.get("/upload", response_class=HTMLResponse)
@@ -245,10 +239,7 @@ def get_document_summary(document_id: str, db: Session = Depends(get_db)):
     if not document_summary:
         raise HTTPException(status_code=404, detail="Document summary not found")
 
-    return {
-        "document_id": document_id,
-        "summary": document_summary
-    }
+    return {"document_id": document_id, "summary": document_summary}
 
 
 @router.delete(

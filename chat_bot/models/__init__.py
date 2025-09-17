@@ -2,6 +2,6 @@
 Models package.
 """
 
-from .document import Document, Base
+from .document import Base, Document
 
 __all__ = ["Document", "Base"]

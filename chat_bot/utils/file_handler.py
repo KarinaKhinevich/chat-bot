@@ -6,10 +6,8 @@ from pathlib import Path
 
 from fastapi import HTTPException, UploadFile
 
-from chat_bot.core import DocumentTypeEnum
-from chat_bot.core import ALLOWED_EXTENSIONS, ALLOWED_MIME_TYPES, MAX_FILE_SIZE
-
-
+from chat_bot.core import (ALLOWED_EXTENSIONS, ALLOWED_MIME_TYPES,
+                           MAX_FILE_SIZE, DocumentTypeEnum)
 
 
 def validate_file(file: UploadFile) -> DocumentTypeEnum:

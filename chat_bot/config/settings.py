@@ -9,6 +9,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 load_dotenv()
 
+
 # Database settings
 class DBSettings(BaseSettings):
     PASSWORD: str
@@ -24,14 +25,16 @@ class DBSettings(BaseSettings):
     class Config:
         env_prefix = "POSTGRES_"
 
+
 # OpenAI settings
 class OpenAISettings(BaseSettings):
     API_KEY: str
     MODEL_NAME: str = "gpt-3.5-turbo"
     TEMPERATURE: float = 0
-    
+
     class Config:
         env_prefix = "OPENAI_"
+
 
 LOGGING_CONFIG = {
     "version": 1,

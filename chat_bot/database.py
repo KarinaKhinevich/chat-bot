@@ -2,11 +2,12 @@
 Database connection and session management.
 """
 
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session
-from sqlalchemy.pool import StaticPool
 from contextlib import contextmanager
 from typing import Generator
+
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.pool import StaticPool
 
 from chat_bot.config import DBSettings
 from chat_bot.models import Base
@@ -20,7 +21,7 @@ engine = create_engine(
     poolclass=StaticPool,
     echo=False,
     pool_pre_ping=True,
-    pool_recycle=300
+    pool_recycle=300,
 )
 
 # Create session factory
@@ -35,7 +36,7 @@ def create_tables():
 def get_db() -> Generator[Session, None, None]:
     """
     Database dependency for FastAPI.
-    
+
     Yields:
         Session: SQLAlchemy database session
     """
@@ -50,7 +51,7 @@ def get_db() -> Generator[Session, None, None]:
 def get_db_session() -> Generator[Session, None, None]:
     """
     Context manager for database sessions.
-    
+
     Yields:
         Session: SQLAlchemy database session
     """
