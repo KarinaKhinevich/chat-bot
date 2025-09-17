@@ -9,7 +9,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 load_dotenv()
 
-
+# Database settings
 class DBSettings(BaseSettings):
     PASSWORD: str
     USER: str
