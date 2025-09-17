@@ -6,7 +6,8 @@ and serialization in the FastAPI application.
 """
 
 from .common import BaseResponse, ErrorResponse
-from .document import (DocumentInfo, DocumentType, DocumentUploadError,
+from .document import (DocumentContentResponse, DocumentInfo,
+                       DocumentListResponse, DocumentUploadError,
                        DocumentUploadResponse)
 from .health import HealthCheck
 
@@ -17,5 +18,6 @@ __all__ = [
     "DocumentUploadResponse",
     "DocumentUploadError",
     "DocumentInfo",
-    "DocumentType",
+    "DocumentListResponse",
+    "DocumentContentResponse",
 ]
