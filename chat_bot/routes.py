@@ -27,17 +27,47 @@ create_tables()
 
 
 @router.get("/", response_class=HTMLResponse)
-async def home(request: Request) -> HTMLResponse:
+async def home(request: Request, db: Session = Depends(get_db)) -> HTMLResponse:
     """
     Render the home page.
 
     Args:
         request: The FastAPI request object
+        db: Database session
 
     Returns:
         HTMLResponse: Rendered home page template
     """
-    return templates.TemplateResponse(request, "home.html")
+    try:
+        # Get documents from database
+        document_service = DocumentService(db)
+        documents = document_service.get_documents()
+        
+        # Get document info for template
+        document_list = [
+            {
+                "document_id": str(doc.id),
+                "filename": doc.original_filename,
+                "file_size": doc.file_size,
+                "document_type": doc.document_type.value,
+                "upload_timestamp": doc.upload_timestamp,
+            }
+            for doc in documents
+        ]
+        
+        return templates.TemplateResponse(
+            request, 
+            "home.html", 
+            {"documents": document_list}
+        )
+    except Exception as e:
+        logger.error(f"Error fetching documents for home page: {str(e)}")
+        # Fallback to empty list if there's an error
+        return templates.TemplateResponse(
+            request, 
+            "home.html", 
+            {"documents": []}
+        )
 
 
 @router.get("/upload", response_class=HTMLResponse)
