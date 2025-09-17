@@ -234,7 +234,7 @@ def get_document_summary(document_id: str, db: Session = Depends(get_db)):
         db: Database session
 
     Returns:
-        Response: The document summary
+        dict: The document summary
 
     Raises:
         HTTPException: If document not found
@@ -245,9 +245,10 @@ def get_document_summary(document_id: str, db: Session = Depends(get_db)):
     if not document_summary:
         raise HTTPException(status_code=404, detail="Document summary not found")
 
-    return Response(
-        content=document_summary
-    )
+    return {
+        "document_id": document_id,
+        "summary": document_summary
+    }
 
 
 @router.delete(

@@ -233,7 +233,8 @@
             try {
                 const response = await fetch(`/documents/${documentId}/summary`);
                 if (response.ok) {
-                    return await response.text();
+                    const data = await response.json();
+                    return data.summary || 'No summary available for this document.';
                 } else {
                     console.error('Failed to fetch summary:', response.status);
                     return 'No summary available for this document.';
