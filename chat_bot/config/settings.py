@@ -1,12 +1,29 @@
 from pathlib import Path
 
 from dotenv import load_dotenv
+from pydantic_settings import BaseSettings
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 
 load_dotenv()
+
+
+class DBSettings(BaseSettings):
+    PASSWORD: str
+    USER: str
+    HOST: str
+    PORT: int
+    DB: str
+
+    @property
+    def DB_URL(self) -> str:
+        return f"postgresql://{self.USER}:{self.PASSWORD}@{self.HOST}:{self.PORT}/{self.DB}"
+
+    class Config:
+        env_prefix = "POSTGRES_"
+
 
 LOGGING_CONFIG = {
     "version": 1,
