@@ -29,7 +29,7 @@ class DocumentChunker:
     - General chunking with configurable overlap and context windows
     """
 
-    def __init__(self) -> None:
+    def __init__(self, embeddings: OpenAIEmbeddings) -> None:
         """
         Initialize the document chunker with OpenAI embeddings.
         
@@ -37,14 +37,8 @@ class DocumentChunker:
             ValueError: If OpenAI API key is invalid or missing
             ConnectionError: If unable to connect to OpenAI API
         """
-        try:
-            self._embeddings = OpenAIEmbeddings(
-                openai_api_key=openai_settings.API_KEY,
-                model=chunking_settings.MODEL_NAME
-            )
-        except Exception as e:
-            logger.error(f"Failed to initialize OpenAI embeddings: {str(e)}")
-            raise
+     
+        self._embeddings = embeddings
 
     def _semantic_split(
         self,

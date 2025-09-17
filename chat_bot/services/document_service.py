@@ -1,5 +1,5 @@
 """
-Document service for database operations.
+Document service for async database operations.
 """
 
 import logging
@@ -8,7 +8,8 @@ from datetime import datetime
 from typing import List, Optional
 
 from fastapi import HTTPException, UploadFile
-from sqlalchemy.orm import Session
+from sqlalchemy import select, delete
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from chat_bot.core import DocumentTypeEnum
 from chat_bot.models import Document
@@ -18,9 +19,9 @@ logger = logging.getLogger(__name__)
 
 
 class DocumentService:
-    """Service class for document operations."""
+    """Service class for async document operations."""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: AsyncSession):
         self.db = db
 
     async def create_document(
@@ -32,6 +33,7 @@ class DocumentService:
         Args:
             file: The uploaded file
             document_type: Type of the document (PDF or TXT)
+            summary: Generated summary of the document
 
         Returns:
             DocumentUploadResponse: Information about the created document
@@ -65,8 +67,8 @@ class DocumentService:
 
             # Save to database
             self.db.add(db_document)
-            self.db.commit()
-            self.db.refresh(db_document)
+            await self.db.commit()
+            await self.db.refresh(db_document)
 
             return DocumentUploadResponse(
                 document_id=str(db_document.id),
@@ -78,12 +80,12 @@ class DocumentService:
             )
 
         except Exception as e:
-            self.db.rollback()
+            await self.db.rollback()
             raise HTTPException(
                 status_code=500, detail=f"Failed to save document to database: {str(e)}"
             )
 
-    def get_document(self, document_id: str) -> Optional[Document]:
+    async def get_document(self, document_id: str) -> Optional[Document]:
         """
         Get a document by ID.
 
@@ -95,11 +97,14 @@ class DocumentService:
         """
         try:
             doc_uuid = uuid.UUID(document_id)
-            return self.db.query(Document).filter(Document.id == doc_uuid).first()
+            result = await self.db.execute(
+                select(Document).filter(Document.id == doc_uuid)
+            )
+            return result.scalars().first()
         except ValueError:
             return None
 
-    def get_documents(self, skip: int = 0, limit: int = 100) -> List[Document]:
+    async def get_documents(self, skip: int = 0, limit: int = 100) -> List[Document]:
         """
         Get a list of documents.
 
@@ -110,9 +115,12 @@ class DocumentService:
         Returns:
             List[Document]: List of documents
         """
-        return self.db.query(Document).offset(skip).limit(limit).all()
+        result = await self.db.execute(
+            select(Document).offset(skip).limit(limit)
+        )
+        return list(result.scalars().all())
 
-    def delete_document(self, document_id: str) -> bool:
+    async def delete_document(self, document_id: str) -> bool:
         """
         Delete a document by ID.
 
@@ -124,18 +132,20 @@ class DocumentService:
         """
         try:
             doc_uuid = uuid.UUID(document_id)
-            document = self.db.query(Document).filter(Document.id == doc_uuid).first()
-
-            if document:
-                self.db.delete(document)
-                self.db.commit()
-                return True
-            return False
+            
+            # Use delete statement for async operation
+            result = await self.db.execute(
+                delete(Document).filter(Document.id == doc_uuid)
+            )
+            await self.db.commit()
+            
+            # Check if any rows were affected
+            return result.rowcount > 0
 
         except ValueError:
             return False
 
-    def get_document_content(self, document_id: str) -> Optional[bytes]:
+    async def get_document_content(self, document_id: str) -> Optional[bytes]:
         """
         Get document content by ID.
 
@@ -145,10 +155,10 @@ class DocumentService:
         Returns:
             Optional[bytes]: Document content if found, None otherwise
         """
-        document = self.get_document(document_id)
+        document = await self.get_document(document_id)
         return document.content if document else None
 
-    def get_document_summary(self, document_id: str) -> Optional[str]:
+    async def get_document_summary(self, document_id: str) -> Optional[str]:
         """
         Get document summary by ID.
 
@@ -158,5 +168,5 @@ class DocumentService:
         Returns:
             Optional[str]: Document summary if found, None otherwise
         """
-        document = self.get_document(document_id)
+        document = await self.get_document(document_id)
         return document.summary if document else None

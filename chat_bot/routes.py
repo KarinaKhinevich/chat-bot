@@ -4,11 +4,11 @@ from fastapi import (APIRouter, Depends, File, HTTPException, Request,
                      UploadFile, status)
 from fastapi.responses import HTMLResponse, Response
 from fastapi.templating import Jinja2Templates
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from chat_bot.core import DocumentTypeEnum
 from chat_bot.database import create_tables, get_db
-from chat_bot.document_processing import DocumentParser, DocumentChunker
+from chat_bot.document_processing import DocumentParser, PGVector
 from chat_bot.schemas import (DocumentInfo, DocumentListResponse,
                               DocumentUploadError, DocumentUploadResponse,
                               HealthCheck)
@@ -24,20 +24,23 @@ router = APIRouter()
 templates = Jinja2Templates(directory="templates")
 
 document_parser = DocumentParser()
-document_chunker = DocumentChunker()
+pg_vector = PGVector()
 
 # Ensure database tables exist on startup
-create_tables()
+# Note: This will be called during app startup
+async def startup_event():
+    """Initialize database tables on startup."""
+    await create_tables()
 
 
 @router.get("/", response_class=HTMLResponse)
-async def home(request: Request, db: Session = Depends(get_db)) -> HTMLResponse:
+async def home(request: Request, db: AsyncSession = Depends(get_db)) -> HTMLResponse:
     """
     Render the home page.
 
     Args:
         request: The FastAPI request object
-        db: Database session
+        db: Async database session
 
     Returns:
         HTMLResponse: Rendered home page template
@@ -45,7 +48,7 @@ async def home(request: Request, db: Session = Depends(get_db)) -> HTMLResponse:
     try:
         # Get documents from database
         document_service = DocumentService(db)
-        documents = document_service.get_documents()
+        documents = await document_service.get_documents()
 
         # Get document info for template
         document_list = [
@@ -119,7 +122,7 @@ def get_health() -> HealthCheck:
     },
 )
 async def upload_document(
-    file: UploadFile = File(...), db: Session = Depends(get_db)
+    file: UploadFile = File(...), db: AsyncSession = Depends(get_db)
 ) -> DocumentUploadResponse:
     """
     ## Upload a Document
@@ -157,7 +160,7 @@ async def upload_document(
             summary = ""
             logger.warning(f"Failed to generate summary: {str(e)}")
 
-        chunks = document_chunker.index_document(page_content, metadata)
+        # pg_vector.add_document_to_vector(page_content, metadata)
         # Create document service and save to database
         document_service = DocumentService(db)
         result = await document_service.create_document(file, document_type, summary)
@@ -185,8 +188,8 @@ async def upload_document(
     response_description="List of uploaded documents",
     response_model=DocumentListResponse,
 )
-def list_documents(
-    skip: int = 0, limit: int = 100, db: Session = Depends(get_db)
+async def list_documents(
+    skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)
 ) -> DocumentListResponse:
     """
     ## List Documents
@@ -196,13 +199,13 @@ def list_documents(
     Args:
         skip: Number of documents to skip (for pagination)
         limit: Maximum number of documents to return
-        db: Database session
+        db: Async database session
 
     Returns:
         DocumentListResponse: List of documents
     """
     document_service = DocumentService(db)
-    documents = document_service.get_documents(skip=skip, limit=limit)
+    documents = await document_service.get_documents(skip=skip, limit=limit)
 
     document_infos = [
         DocumentInfo(
@@ -226,7 +229,7 @@ def list_documents(
     summary="Get a document summary",
     response_description="Document summary",
 )
-def get_document_summary(document_id: str, db: Session = Depends(get_db)):
+async def get_document_summary(document_id: str, db: AsyncSession = Depends(get_db)):
     """
     ## Get Document Summary
 
@@ -234,7 +237,7 @@ def get_document_summary(document_id: str, db: Session = Depends(get_db)):
 
     Args:
         document_id: The document ID
-        db: Database session
+        db: Async database session
 
     Returns:
         dict: The document summary
@@ -243,7 +246,7 @@ def get_document_summary(document_id: str, db: Session = Depends(get_db)):
         HTTPException: If document not found
     """
     document_service = DocumentService(db)
-    document_summary = document_service.get_document_summary(document_id)
+    document_summary = await document_service.get_document_summary(document_id)
 
     if not document_summary:
         raise HTTPException(status_code=404, detail="Document summary not found")
@@ -257,7 +260,7 @@ def get_document_summary(document_id: str, db: Session = Depends(get_db)):
     summary="Delete a document",
     response_description="Deletion confirmation",
 )
-def delete_document(document_id: str, db: Session = Depends(get_db)):
+async def delete_document(document_id: str, db: AsyncSession = Depends(get_db)):
     """
     ## Delete Document
 
@@ -265,7 +268,7 @@ def delete_document(document_id: str, db: Session = Depends(get_db)):
 
     Args:
         document_id: The document ID
-        db: Database session
+        db: Async database session
 
     Returns:
         dict: Deletion confirmation
@@ -274,7 +277,7 @@ def delete_document(document_id: str, db: Session = Depends(get_db)):
         HTTPException: If document not found
     """
     document_service = DocumentService(db)
-    success = document_service.delete_document(document_id)
+    success = await document_service.delete_document(document_id)
 
     if not success:
         raise HTTPException(status_code=404, detail="Document not found")

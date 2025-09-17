@@ -19,8 +19,8 @@ class DBSettings(BaseSettings):
     DB: str
 
     @property
-    def DB_URL(self) -> str:
-        return f"postgresql://{self.USER}:{self.PASSWORD}@{self.HOST}:{self.PORT}/{self.DB}"
+    def URL(self) -> str:
+        return f"postgresql+psycopg://{self.USER}:{self.PASSWORD}@{self.HOST}:{self.PORT}/{self.DB}"
 
     class Config:
         env_prefix = "POSTGRES_"

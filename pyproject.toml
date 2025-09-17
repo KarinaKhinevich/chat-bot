@@ -23,6 +23,8 @@ dependencies = [
     "chardet (>=5.2.0,<6.0.0)",
     "langchain-experimental (>=0.3.4,<0.4.0)",
     "langchain-text-splitters (>=0.3.11,<0.4.0)",
+    "langchain-postgres (>=0.0.15,<0.0.16)",
+    "psycopg[binary] (>=3.2.10,<4.0.0)",
 ]
 
 [tool.poetry]
