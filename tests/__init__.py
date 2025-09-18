@@ -1,3 +1,1 @@
-"""
-Tests package for chat-bot application.
-"""
+"""Tests package for chat-bot application."""

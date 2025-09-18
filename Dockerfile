@@ -2,6 +2,11 @@ FROM python:3.11-slim
 
 WORKDIR /chat_bot
 
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    libpq-dev gcc python3-dev \
+    && rm -rf /var/lib/apt/lists/*
+
 # Install Poetry
 RUN pip install --no-cache-dir poetry
 
