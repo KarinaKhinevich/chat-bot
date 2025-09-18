@@ -4,12 +4,19 @@ Database connection and session management with async SQLAlchemy.
 
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
+import logging
 
+from sqlalchemy import inspect
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.pool import StaticPool
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 from chat_bot.config import DBSettings
 from chat_bot.models import Base
+
+from langchain_postgres import PGEngine, Column
 
 # Initialize database settings
 db_settings = DBSettings()
@@ -18,6 +25,7 @@ db_settings = DBSettings()
 # Convert postgresql:// to postgresql+asyncpg://
 async_db_url = db_settings.URL.replace("postgresql://", "postgresql+asyncpg://")
 
+# Create async engine
 engine = create_async_engine(
     async_db_url,
     poolclass=StaticPool,
@@ -25,6 +33,8 @@ engine = create_async_engine(
     pool_pre_ping=True,
     pool_recycle=300,
 )
+# Initialize PGEngine for vector storage
+pg_engine = PGEngine.from_engine(engine=engine)
 
 # Create async session factory
 AsyncSessionLocal = async_sessionmaker(
@@ -34,8 +44,33 @@ AsyncSessionLocal = async_sessionmaker(
 
 async def create_tables():
     """Create all database tables asynchronously."""
+    # Create SQLAlchemy tables
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+
+    # Create vector table separately (PGEngine manages its own connections)
+    try:
+        # Check if vector table exists using a separate connection
+        async with engine.begin() as conn:
+            def check_table(sync_conn):
+                inspector = inspect(sync_conn)
+                return inspector.has_table(db_settings.VECTOR_TABLE_NAME)
+
+            exists = await conn.run_sync(check_table)
+
+        if not exists:
+            # PGEngine handles its own connection management
+            await pg_engine.ainit_vectorstore_table(
+                table_name=db_settings.VECTOR_TABLE_NAME,
+                vector_size=db_settings.VECTOR_SIZE,
+            )
+            logger.info("Vector table created.")
+        else:
+            logger.info("Vector table already exists. Skipping creation.")
+    except Exception as e:
+        logger.error(f"Error creating vector table: {e}")
+        # Continue startup even if vector table creation fails
+        logger.warning("Continuing startup without vector table")
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:

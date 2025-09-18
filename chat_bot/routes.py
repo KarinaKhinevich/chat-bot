@@ -7,12 +7,12 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from chat_bot.core import DocumentTypeEnum
-from chat_bot.database import create_tables, get_db
-from chat_bot.document_processing import DocumentParser, PGVector
+from chat_bot.database import create_tables, get_db, pg_engine
+from chat_bot.document_processing import DocumentParser
 from chat_bot.schemas import (DocumentInfo, DocumentListResponse,
                               DocumentUploadError, DocumentUploadResponse,
                               HealthCheck)
-from chat_bot.services import DocumentService, summarize_document
+from chat_bot.services import DocumentService, PGDocumentService, summarize_document
 from chat_bot.utils import validate_file
 
 # Configure logging
@@ -23,8 +23,6 @@ logger = logging.getLogger("uvicorn.error")
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
 
-document_parser = DocumentParser()
-pg_vector = PGVector()
 
 # Ensure database tables exist on startup
 # Note: This will be called during app startup
@@ -149,7 +147,9 @@ async def upload_document(
         # Validate the file
         document_type = validate_file(file)
         logger.info(f"File type check {file}")
+
         # Parse the document to extract content and metadata
+        document_parser = DocumentParser()
         page_content, metadata = await document_parser.parse(file, document_type)
 
         # Generate summary using OpenAI (with fallback)
@@ -160,7 +160,10 @@ async def upload_document(
             summary = ""
             logger.warning(f"Failed to generate summary: {str(e)}")
 
-        # pg_vector.add_document_to_vector(page_content, metadata)
+        # Create PGDocumentService instance and add document to vector store
+        pg_vector = PGDocumentService(db, pg_engine)
+        await pg_vector.create_document(page_content, metadata)
+
         # Create document service and save to database
         document_service = DocumentService(db)
         result = await document_service.create_document(file, document_type, summary)
