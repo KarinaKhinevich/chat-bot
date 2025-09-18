@@ -1,3 +1,4 @@
+"""Main application entry point for the chat bot API."""
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI

@@ -1,6 +1,4 @@
-"""
-Services package.
-"""
+"""Services package."""
 
 from .document_service import DocumentService
 from .openai_service import summarize_document

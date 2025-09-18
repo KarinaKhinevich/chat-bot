@@ -1,6 +1,4 @@
-"""
-Pytest configuration and fixtures for the chat-bot application.
-"""
+"""Pytest configuration and fixtures for the chat-bot application."""
 
 import pytest
 import pytest_asyncio
@@ -65,33 +63,32 @@ def client():
     """
     # Override database dependency
     app.dependency_overrides[get_db] = get_test_db
-    
-    # Create tables before each test  
+
+    # Create tables before each test
     import asyncio
-    from chat_bot.database import create_tables
-    
+
     # Run async table creation in sync context
     try:
         loop = asyncio.get_event_loop()
     except RuntimeError:
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-    
+
     # Create tables using the same engine as the test database
     async def create_test_tables():
         async with test_engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
-    
+
     loop.run_until_complete(create_test_tables())
-    
+
     client = TestClient(app)
     yield client
-    
+
     # Clean up tables and override
     async def cleanup_test_tables():
         async with test_engine.begin() as conn:
             await conn.run_sync(Base.metadata.drop_all)
-    
+
     loop.run_until_complete(cleanup_test_tables())
     app.dependency_overrides.clear()
 

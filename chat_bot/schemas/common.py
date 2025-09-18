@@ -1,6 +1,4 @@
-"""
-Common base schemas that can be reused across the application.
-"""
+"""Common base schemas that can be reused across the application."""
 
 from datetime import datetime
 from typing import Optional

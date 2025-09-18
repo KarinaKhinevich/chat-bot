@@ -7,7 +7,7 @@ It extracts text content from all pages and basic metadata from the document.
 
 import io
 import logging
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, Tuple
 
 import pdfplumber
 from fastapi import HTTPException, UploadFile
@@ -19,9 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 class PDFParser(BaseParser):
-    """
-    Parser implementation for PDF documents using pdfplumber.
-    """
+    """Parser implementation for PDF documents using pdfplumber."""
 
     async def parse(self, document: UploadFile) -> Tuple[str, Dict[str, Any]]:
         """

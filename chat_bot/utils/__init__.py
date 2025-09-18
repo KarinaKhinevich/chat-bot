@@ -1,6 +1,4 @@
-"""
-Utilities package.
-"""
+"""Utilities package."""
 
 from .file_handler import validate_file
 

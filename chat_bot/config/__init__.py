@@ -1,6 +1,4 @@
-"""
-Configuration package.
-"""
+"""Configuration package."""
 
 from .settings import ChunkingSettings, DBSettings, OpenAISettings
 

@@ -1,6 +1,4 @@
-"""
-Database connection and session management with async SQLAlchemy.
-"""
+"""Database connection and session management with async SQLAlchemy."""
 
 import logging
 from contextlib import asynccontextmanager
@@ -14,7 +12,7 @@ from sqlalchemy.pool import StaticPool
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-from langchain_postgres import Column, PGEngine
+from langchain_postgres import PGEngine
 
 from chat_bot.config import DBSettings
 from chat_bot.models import Base

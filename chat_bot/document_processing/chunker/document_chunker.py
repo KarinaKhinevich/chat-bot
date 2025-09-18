@@ -1,6 +1,4 @@
-"""
-Document chunking module for text processing and indexing.
-"""
+"""Document chunking module for text processing and indexing."""
 
 import logging
 from typing import Any, Dict, List, Union
@@ -24,6 +22,7 @@ logger = logging.getLogger(__name__)
 class DocumentChunker:
     """
     Document chunking service for splitting text into manageable chunks.
+
     Strategy selection based on configuration settings:
     - Semantic chunking using embeddings for coherent topic boundaries
     - General chunking with configurable overlap and context windows
@@ -37,7 +36,6 @@ class DocumentChunker:
             ValueError: If OpenAI API key is invalid or missing
             ConnectionError: If unable to connect to OpenAI API
         """
-
         self._embeddings = embeddings
 
     def _semantic_split(

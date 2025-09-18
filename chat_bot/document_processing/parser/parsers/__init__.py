@@ -1,6 +1,4 @@
-"""
-Document parsers package.
-"""
+"""Document parsers package."""
 
 from .base_parser import BaseParser
 from .pdf_parser import PDFParser

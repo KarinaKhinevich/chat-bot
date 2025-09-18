@@ -1,6 +1,4 @@
-"""
-Document processing package.
-"""
+"""Document processing package."""
 
 from .chunker.document_chunker import DocumentChunker
 from .parser.document_parser import DocumentParser

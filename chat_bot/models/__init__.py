@@ -1,6 +1,4 @@
-"""
-Models package.
-"""
+"""Models package."""
 
 from .document import Base, Document
 

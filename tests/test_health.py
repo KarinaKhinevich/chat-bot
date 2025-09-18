@@ -1,6 +1,4 @@
-"""
-Tests for health check endpoint.
-"""
+"""Tests for health check endpoint."""
 
 import pytest
 from fastapi import status

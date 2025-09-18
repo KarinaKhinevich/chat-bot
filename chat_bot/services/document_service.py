@@ -1,6 +1,4 @@
-"""
-Document service for async database operations.
-"""
+"""Document service for async database operations."""
 
 import logging
 import uuid
@@ -22,6 +20,7 @@ class DocumentService:
     """Service class for async document operations."""
 
     def __init__(self, db: AsyncSession):
+        """Initialize the service with a database session."""
         self.db = db
 
     async def create_document(

@@ -1,6 +1,4 @@
-"""
-File handling utilities for document uploads.
-"""
+"""File handling utilities for document uploads."""
 
 from pathlib import Path
 

@@ -1,8 +1,4 @@
-"""
-Tests for routes and endpoints.
-"""
-
-from unittest.mock import AsyncMock, patch
+"""Tests for routes and endpoints."""
 
 import pytest
 from fastapi import status

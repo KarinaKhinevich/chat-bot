@@ -1,8 +1,5 @@
-"""
-Tests for DocumentService class.
-"""
+"""Tests for DocumentService class."""
 
-import io
 import uuid
 from datetime import datetime
 from unittest.mock import AsyncMock

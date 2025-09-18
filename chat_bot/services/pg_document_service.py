@@ -1,6 +1,4 @@
-"""
-Document service for async database operations.
-"""
+"""Document service for async database operations."""
 
 import logging
 from typing import Any, Dict, Union
@@ -9,7 +7,6 @@ from fastapi import HTTPException
 from langchain_openai import OpenAIEmbeddings
 from langchain_postgres import PGEngine, PGVectorStore
 from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from chat_bot.config import ChunkingSettings, DBSettings, OpenAISettings
 from chat_bot.database import engine
@@ -27,6 +24,7 @@ class PGDocumentService:
     """Service class for async vector document operations."""
 
     def __init__(self, pg_engine: PGEngine):
+        """Initialize the service with a PostgreSQL engine."""
         try:
             self._embeddings = OpenAIEmbeddings(
                 openai_api_key=openai_settings.API_KEY,
@@ -40,6 +38,7 @@ class PGDocumentService:
         self.pg_engine = pg_engine
 
     async def init_pgvector(self) -> PGVectorStore:
+        """Initialize and return the PGVectorStore."""
         return await PGVectorStore.create(
             engine=self.pg_engine,
             table_name=db_settings.VECTOR_TABLE_NAME,

@@ -1,9 +1,7 @@
-"""
-Document parser module for handling multiple document types.
-"""
+"""Document parser module for handling multiple document types."""
 
 import logging
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Tuple
 
 from fastapi import HTTPException, UploadFile
 
@@ -43,6 +41,7 @@ class DocumentParser:
     ) -> Tuple[str, Dict[str, Any]]:
         """
         Parse a document based on its type and extract content with metadata.
+        
         Args:
             document (UploadFile): The uploaded document to parse.
             document_type (DocumentTypeEnum): The type of document to parse.

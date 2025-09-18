@@ -1,3 +1,4 @@
+"""Core constants and configurations."""
 from .enums import DocumentTypeEnum
 
 # Document configuration

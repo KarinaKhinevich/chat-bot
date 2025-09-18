@@ -18,9 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 class TXTParser(BaseParser):
-    """
-    Parser implementation for plain text (.txt) documents.
-    """
+    """Parser implementation for plain text (.txt) documents."""
 
     async def parse(self, document: UploadFile) -> Tuple[str, Dict[str, Any]]:
         """
@@ -51,7 +49,6 @@ class TXTParser(BaseParser):
             # Detect encoding using chardet library
             encoding_info = chardet.detect(file_bytes)
             detected_encoding = encoding_info.get("encoding", "utf-8")
-            encoding_confidence = encoding_info.get("confidence", 0.0)
 
             # Decode content
             try:

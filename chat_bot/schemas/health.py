@@ -1,6 +1,4 @@
-"""
-Health check related schemas.
-"""
+"""Health check related schemas."""
 
 from pydantic import BaseModel
 

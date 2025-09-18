@@ -1,6 +1,4 @@
-"""
-Database models for the chat bot application.
-"""
+"""Database models for the chat bot application."""
 
 import uuid
 from datetime import datetime
@@ -36,4 +34,5 @@ class Document(Base):
     upload_timestamp = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     def __repr__(self):
+        """String representation of the Document model."""
         return f"<Document(id={self.id}, filename='{self.filename}', type='{self.document_type}')>"

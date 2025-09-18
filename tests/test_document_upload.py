@@ -1,6 +1,4 @@
-"""
-Tests for document upload functionality.
-"""
+"""Tests for document upload functionality."""
 
 import io
 from unittest.mock import AsyncMock, patch
