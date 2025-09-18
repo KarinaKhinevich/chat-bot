@@ -8,6 +8,6 @@ from .txt_parser import TXTParser
 
 __all__ = [
     "BaseParser",
-    "PDFParser", 
+    "PDFParser",
     "TXTParser",
 ]

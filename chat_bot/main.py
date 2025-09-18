@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
@@ -9,7 +10,7 @@ from chat_bot.routes import router, startup_event
 async def lifespan(app: FastAPI):
     """
     Lifespan context manager for FastAPI application.
-    
+
     Handles startup and shutdown events for the application.
     """
     # Startup

@@ -8,7 +8,7 @@ from datetime import datetime
 from typing import List, Optional
 
 from fastapi import HTTPException, UploadFile
-from sqlalchemy import select, delete
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from chat_bot.core import DocumentTypeEnum
@@ -115,9 +115,7 @@ class DocumentService:
         Returns:
             List[Document]: List of documents
         """
-        result = await self.db.execute(
-            select(Document).offset(skip).limit(limit)
-        )
+        result = await self.db.execute(select(Document).offset(skip).limit(limit))
         return list(result.scalars().all())
 
     async def delete_document(self, document_id: str) -> bool:
@@ -132,13 +130,13 @@ class DocumentService:
         """
         try:
             doc_uuid = uuid.UUID(document_id)
-            
+
             # Use delete statement for async operation
             result = await self.db.execute(
                 delete(Document).filter(Document.id == doc_uuid)
             )
             await self.db.commit()
-            
+
             # Check if any rows were affected
             return result.rowcount > 0
 

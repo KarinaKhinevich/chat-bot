@@ -17,7 +17,7 @@ class DBSettings(BaseSettings):
     HOST: str
     PORT: int
     DB: str
-    VECTOR_TABLE_NAME: str = "documents_vectors" 
+    VECTOR_TABLE_NAME: str = "documents_vectors"
     VECTOR_SIZE: int = 1536  # OpenAI text-embedding-3-small produces 1536 dimensions
 
     @property
@@ -37,15 +37,17 @@ class OpenAISettings(BaseSettings):
     class Config:
         env_prefix = "OPENAI_"
 
+
 # Chunking settings
 class ChunkingSettings(BaseSettings):
     STRATEGY: str = "general"  # Options: 'general', 'semantic'
-    MODEL_NAME: str = "text-embedding-3-small" 
+    MODEL_NAME: str = "text-embedding-3-small"
     CHUNK_SIZE: int = 500
     OVERLAP_SIZE: int = 50
 
     class Config:
         env_prefix = "CHUNKING_"
+
 
 LOGGING_CONFIG = {
     "version": 1,

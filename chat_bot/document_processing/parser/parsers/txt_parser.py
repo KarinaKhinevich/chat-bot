@@ -6,9 +6,10 @@ It handles various text encodings and extracts content with basic metadata.
 """
 
 import logging
-from typing import Dict, Any, Tuple
-from fastapi import UploadFile, HTTPException
+from typing import Any, Dict, Tuple
+
 import chardet
+from fastapi import HTTPException, UploadFile
 
 from .base_parser import BaseParser
 
@@ -20,14 +21,14 @@ class TXTParser(BaseParser):
     """
     Parser implementation for plain text (.txt) documents.
     """
-    
+
     async def parse(self, document: UploadFile) -> Tuple[str, Dict[str, Any]]:
         """
         Parse a plain text document and extract its content and metadata.
-        
+
         Args:
             document (UploadFile): The uploaded text document to parse.
-        
+
         Returns:
             Tuple[str, Dict[str, Any]]: A tuple containing:
                 - str: The decoded text content of the document
@@ -46,12 +47,12 @@ class TXTParser(BaseParser):
             if not file_bytes:
                 logger.warning(f"Empty file detected: {document.filename}")
                 return "", {"title": document.filename or "untitled.txt"}
-            
+
             # Detect encoding using chardet library
             encoding_info = chardet.detect(file_bytes)
             detected_encoding = encoding_info.get("encoding", "utf-8")
             encoding_confidence = encoding_info.get("confidence", 0.0)
-            
+
             # Decode content
             try:
                 page_content = file_bytes.decode(detected_encoding, errors="ignore")
@@ -60,18 +61,19 @@ class TXTParser(BaseParser):
                     f"Failed to decode with {detected_encoding}, falling back to UTF-8: {e}"
                 )
                 page_content = file_bytes.decode("utf-8", errors="ignore")
-            
+
             # Prepare metadata with encoding information
             metadata: Dict[str, Any] = {
                 "title": document.filename or "untitled.txt",
             }
-            
+
             return page_content, metadata
-            
+
         except Exception as e:
-            error_message = f"Failed to parse TXT document {document.filename}: {str(e)}"
+            error_message = (
+                f"Failed to parse TXT document {document.filename}: {str(e)}"
+            )
             logger.error(error_message)
             raise HTTPException(
-                status_code=422,
-                detail=f"Text parsing error: {str(e)}"
+                status_code=422, detail=f"Text parsing error: {str(e)}"
             ) from e
