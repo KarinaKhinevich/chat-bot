@@ -1,12 +1,67 @@
+"""Project settings module."""
 from pathlib import Path
-from dotenv import load_dotenv
 
+from dotenv import load_dotenv
+from pydantic_settings import BaseSettings
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 
 load_dotenv()
+
+
+# Database settings
+class DBSettings(BaseSettings):
+    """Database configuration settings."""
+
+    PASSWORD: str
+    USER: str
+    HOST: str
+    PORT: int
+    DB: str
+    VECTOR_TABLE_NAME: str = "documents_vectors"
+    VECTOR_SIZE: int = 1536  # OpenAI text-embedding-3-small produces 1536 dimensions
+
+    @property
+    def URL(self) -> str:
+        """Construct the database URL."""
+        return f"postgresql+psycopg://{self.USER}:{self.PASSWORD}@{self.HOST}:{self.PORT}/{self.DB}"
+
+    class Config:
+        """Pydantic configuration for environment variable prefix."""
+
+        env_prefix = "POSTGRES_"
+
+
+# OpenAI settings
+class OpenAISettings(BaseSettings):
+    """OpenAI configuration settings."""
+
+    API_KEY: str
+    MODEL_NAME: str = "gpt-3.5-turbo"
+    TEMPERATURE: float = 0
+
+    class Config:
+        """Pydantic configuration for environment variable prefix."""
+
+        env_prefix = "OPENAI_"
+
+
+# Chunking settings
+class ChunkingSettings(BaseSettings):
+    """Settings for document chunking and embedding."""
+
+    STRATEGY: str = "general"  # Options: 'general', 'semantic'
+    MODEL_NAME: str = "text-embedding-3-small"
+    CHUNK_SIZE: int = 500
+    OVERLAP_SIZE: int = 50
+
+    class Config:
+        """Pydantic configuration for environment variable prefix."""
+
+        env_prefix = "CHUNKING_"
+
 
 LOGGING_CONFIG = {
     "version": 1,
