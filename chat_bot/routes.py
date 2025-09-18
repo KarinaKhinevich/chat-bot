@@ -12,7 +12,8 @@ from chat_bot.document_processing import DocumentParser
 from chat_bot.schemas import (DocumentInfo, DocumentListResponse,
                               DocumentUploadError, DocumentUploadResponse,
                               HealthCheck)
-from chat_bot.services import DocumentService, PGDocumentService, summarize_document
+from chat_bot.services import (DocumentService, PGDocumentService,
+                               summarize_document)
 from chat_bot.utils import validate_file
 
 # Configure logging
@@ -160,13 +161,16 @@ async def upload_document(
             summary = ""
             logger.warning(f"Failed to generate summary: {str(e)}")
 
-        # Create PGDocumentService instance and add document to vector store
-        pg_vector = PGDocumentService(db, pg_engine)
-        await pg_vector.create_document(page_content, metadata)
-
-        # Create document service and save to database
+        # Create document service and save to database first to get document ID
         document_service = DocumentService(db)
         result = await document_service.create_document(file, document_type, summary)
+
+        # Add document ID to metadata for vector store linking
+        metadata["document_id"] = result.document_id
+
+        # Create PGDocumentService instance and add document to vector store
+        pg_vector = PGDocumentService(pg_engine)
+        await pg_vector.create_document(page_content, metadata)
 
         # Log the upload
         logger.info(f"Document uploaded to database: {file.filename}")
@@ -262,12 +266,18 @@ async def get_document_summary(document_id: str, db: AsyncSession = Depends(get_
     tags=["documents"],
     summary="Delete a document",
     response_description="Deletion confirmation",
+    responses={
+        404: {"description": "Document not found"},
+        500: {
+            "description": "Document deleted from main database but vector deletion failed"
+        },
+    },
 )
 async def delete_document(document_id: str, db: AsyncSession = Depends(get_db)):
     """
     ## Delete Document
 
-    Delete a document by its ID.
+    Delete a document by its ID from both the main database and vector store.
 
     Args:
         document_id: The document ID
@@ -277,12 +287,46 @@ async def delete_document(document_id: str, db: AsyncSession = Depends(get_db)):
         dict: Deletion confirmation
 
     Raises:
-        HTTPException: If document not found
+        HTTPException:
+            - 404 if document not found in main database
+            - 500 if document deleted from main database but vector deletion fails
     """
+    # Initialize services
     document_service = DocumentService(db)
+    pg_vector_service = PGDocumentService(pg_engine)
+
+    # First, delete from main database
     success = await document_service.delete_document(document_id)
 
     if not success:
         raise HTTPException(status_code=404, detail="Document not found")
 
-    return {"success": True, "message": "Document deleted successfully"}
+    # Then, delete from vector store using metadata
+    vector_deletion_success = False
+    vector_error = None
+
+    try:
+        vector_deleted_count = await pg_vector_service.delete_document_by_metadata(
+            document_id
+        )
+        logger.info(
+            f"Deleted {vector_deleted_count} vector chunks for document {document_id}"
+        )
+        vector_deletion_success = True
+    except Exception as e:
+        vector_error = str(e)
+        logger.error(f"Failed to delete from vector store: {vector_error}")
+
+    # Determine response based on deletion results
+    if vector_deletion_success:
+        return {
+            "success": True,
+            "message": f"Document {document_id} deleted successfully from both databases",
+        }
+    else:
+        # Main document was deleted but vector deletion failed
+        # This is a partial failure scenario
+        raise HTTPException(
+            status_code=500,
+            detail=f"Document {document_id} was deleted from main database, but failed to delete from vector store: {vector_error}",
+        )
