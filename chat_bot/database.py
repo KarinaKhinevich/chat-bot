@@ -4,19 +4,16 @@ import logging
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
-from sqlalchemy import inspect
-from sqlalchemy.ext.asyncio import (AsyncSession, async_sessionmaker,
-                                    create_async_engine)
-from sqlalchemy.pool import StaticPool
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
 from langchain_postgres import PGEngine
+from sqlalchemy import inspect
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.pool import StaticPool
 
 from chat_bot.config import DBSettings
 from chat_bot.models import Base
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 # Initialize database settings
 db_settings = DBSettings()
 

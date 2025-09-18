@@ -11,6 +11,7 @@ class DocumentTypeEnum(enum.Enum):
 
 class BREAKPOINT_THRESHOLD_TYPE(enum.Enum):
     """Breakpoint threshold types enumeration."""
+
     PERCENTILE = "percentile"
     STANDARD_DEVIATION = "standard_deviation"
     INTERQUARTILE = "interquartile"

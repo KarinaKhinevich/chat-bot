@@ -15,9 +15,7 @@ Base = declarative_base()
 
 
 class Document(Base):
-    """
-    Document model for storing uploaded documents.
-    """
+    """Document model for storing uploaded documents."""
 
     __tablename__ = "documents"
 
@@ -34,5 +32,5 @@ class Document(Base):
     upload_timestamp = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     def __repr__(self):
-        """String representation of the Document model."""
+        """Represent document of the Document model."""
         return f"<Document(id={self.id}, filename='{self.filename}', type='{self.document_type}')>"

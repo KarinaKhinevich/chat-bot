@@ -1,19 +1,21 @@
-""""API route definitions for the chat bot application."""
+"""API route definitions for the chat bot application."""
 import logging
 
-from fastapi import (APIRouter, Depends, File, HTTPException, Request,
-                     UploadFile, status)
+from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile, status
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from chat_bot.database import create_tables, get_db, pg_engine
 from chat_bot.document_processing import DocumentParser
-from chat_bot.schemas import (DocumentInfo, DocumentListResponse,
-                              DocumentUploadError, DocumentUploadResponse,
-                              HealthCheck)
-from chat_bot.services import (DocumentService, PGDocumentService,
-                               summarize_document)
+from chat_bot.schemas import (
+    DocumentInfo,
+    DocumentListResponse,
+    DocumentUploadError,
+    DocumentUploadResponse,
+    HealthCheck,
+)
+from chat_bot.services import DocumentService, PGDocumentService, summarize_document
 from chat_bot.utils import validate_file
 
 # Configure logging
@@ -123,7 +125,8 @@ def get_health() -> HealthCheck:
 async def upload_document(
     file: UploadFile = File(...), db: AsyncSession = Depends(get_db)
 ) -> DocumentUploadResponse:
-    """## Upload a Document
+    """
+    ## Upload a Document.
 
     Upload a PDF or TXT document to the database.
 
@@ -197,7 +200,8 @@ async def upload_document(
 async def list_documents(
     skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)
 ) -> DocumentListResponse:
-    """## List Documents
+    """
+    ## List Documents.
 
     Get a list of all uploaded documents.
 
@@ -235,7 +239,8 @@ async def list_documents(
     response_description="Document summary",
 )
 async def get_document_summary(document_id: str, db: AsyncSession = Depends(get_db)):
-    """## Get Document Summary
+    """
+    ## Get Document Summary.
 
     Get a document summary by its ID.
 
@@ -271,7 +276,8 @@ async def get_document_summary(document_id: str, db: AsyncSession = Depends(get_
     },
 )
 async def delete_document(document_id: str, db: AsyncSession = Depends(get_db)):
-    """## Delete Document
+    """
+    ## Delete Document.
 
     Delete a document by its ID from both the main database and vector store.
 

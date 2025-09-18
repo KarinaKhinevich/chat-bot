@@ -41,7 +41,7 @@ class DocumentParser:
     ) -> Tuple[str, Dict[str, Any]]:
         """
         Parse a document based on its type and extract content with metadata.
-        
+
         Args:
             document (UploadFile): The uploaded document to parse.
             document_type (DocumentTypeEnum): The type of document to parse.

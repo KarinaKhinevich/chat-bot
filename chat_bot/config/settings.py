@@ -30,24 +30,28 @@ class DBSettings(BaseSettings):
 
     class Config:
         """Pydantic configuration for environment variable prefix."""
+
         env_prefix = "POSTGRES_"
 
 
 # OpenAI settings
 class OpenAISettings(BaseSettings):
     """OpenAI configuration settings."""
+
     API_KEY: str
     MODEL_NAME: str = "gpt-3.5-turbo"
     TEMPERATURE: float = 0
 
     class Config:
         """Pydantic configuration for environment variable prefix."""
+
         env_prefix = "OPENAI_"
 
 
 # Chunking settings
 class ChunkingSettings(BaseSettings):
     """Settings for document chunking and embedding."""
+
     STRATEGY: str = "general"  # Options: 'general', 'semantic'
     MODEL_NAME: str = "text-embedding-3-small"
     CHUNK_SIZE: int = 500
@@ -55,6 +59,7 @@ class ChunkingSettings(BaseSettings):
 
     class Config:
         """Pydantic configuration for environment variable prefix."""
+
         env_prefix = "CHUNKING_"
 
 
