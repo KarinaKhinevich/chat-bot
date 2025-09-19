@@ -47,6 +47,7 @@ class OpenAISettings(BaseSettings):
 
         env_prefix = "OPENAI_"
 
+
 # Langchain settings
 class LangchainSettings(BaseSettings):
     """Langchain configuration settings."""
@@ -59,6 +60,7 @@ class LangchainSettings(BaseSettings):
         """Pydantic configuration for environment variable prefix."""
 
         env_prefix = "LANGCHAIN_"
+
 
 # Chunking settings
 class ChunkingSettings(BaseSettings):

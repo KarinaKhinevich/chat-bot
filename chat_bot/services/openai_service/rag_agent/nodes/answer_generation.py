@@ -1,12 +1,13 @@
 """Answer generation node for RAG agent."""
 
 import logging
-from typing import Dict, Any
+from typing import Any, Dict
 
 from langchain.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI
 
 from chat_bot.config import OpenAISettings
+
 from ..state import State
 
 logger = logging.getLogger(__name__)
@@ -16,7 +17,7 @@ openai_settings = OpenAISettings()
 
 class AnswerGenerator:
     """Node for generating answers based on retrieved documents."""
-    
+
     def __init__(self):
         """Initialize the answer generator."""
         self.llm = ChatOpenAI(
@@ -24,7 +25,7 @@ class AnswerGenerator:
             model=openai_settings.MODEL_NAME,
             temperature=openai_settings.TEMPERATURE,
         )
-        
+
         self.answer_prompt = PromptTemplate.from_template(
             """You are a helpful AI assistant that answers questions based on the provided document content.
 
@@ -44,46 +45,43 @@ Instructions:
 
 Answer:"""
         )
-    
+
     async def generate_answer(self, state: State) -> Dict[str, Any]:
         """
         Generate an answer based on the retrieved documents.
-        
+
         Args:
             state: Current state containing query and documents
-            
+
         Returns:
             Updated state with generated answer
         """
         try:
             query = state.get("input", "")
             documents = state.get("documents", [])
-            
+
             if not documents:
                 logger.warning("No documents available for answer generation")
                 return {
                     "answer": "I don't have any documents to base my answer on.",
-                    "is_last_step": True
+                    "is_last_step": True,
                 }
-            
+
             # Format context from documents
             context = "\n\n".join([doc for doc in documents])
-            
+
             # Generate answer using LLM
             prompt = self.answer_prompt.format(context=context, question=query)
             response = await self.llm.ainvoke(prompt)
             answer_text = response.content
-            
+
             logger.info(f"Generated answer for query: {query[:50]}...")
-            
-            return {
-                "answer": answer_text,
-                "is_last_step": True
-            }
-            
+
+            return {"answer": answer_text, "is_last_step": True}
+
         except Exception as e:
             logger.error(f"Error generating answer: {str(e)}")
             return {
                 "answer": f"I encountered an error while generating the answer: {str(e)}",
-                "is_last_step": True
+                "is_last_step": True,
             }

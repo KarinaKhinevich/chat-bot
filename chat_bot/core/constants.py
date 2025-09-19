@@ -16,4 +16,3 @@ MODERATION_MESSAGE = "I'm sorry, but I can't assist with that kind of request. M
 RETRIEVAL_FAILED_MESSAGE = "I couldn't find information in the uploaded documents that's relevant to your question. Please try asking about topics that are covered in your documents."
 
 RETRIEVAL_TOP_K = 3  # Number of top documents to retrieve for context
-
