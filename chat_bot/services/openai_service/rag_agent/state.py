@@ -26,7 +26,6 @@ class State(TypedDict):
     sources: List[str]  # Source filenames/identifiers
     
     # Relevance and scoring
-    relevance_score: float  # Score indicating relevance (0.0 to 1.0)
     is_relevant: bool  # Boolean flag for relevance decision
     
     # Flow control

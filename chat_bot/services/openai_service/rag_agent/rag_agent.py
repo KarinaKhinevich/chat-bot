@@ -1,7 +1,7 @@
 import logging
 
 from langgraph.graph import StateGraph, START, END
-from .nodes import Moderation
+from .nodes import Moderation, RelevanceChecker
 from .state import State
 
 logger = logging.getLogger(__name__)
@@ -29,6 +29,7 @@ class RAGAgent:
             streaming_mode: If True, enables streaming responses.
         """
         self.__moderation = Moderation()
+        self.__relevance_checker = RelevanceChecker()
         self.__langgraph_init()
 
     def __langgraph_init(self):
@@ -47,7 +48,17 @@ class RAGAgent:
             self.__moderation.moderation_failed_handler,
         )
 
-          # Define the graph flow
+        # Add relevance checking nodes
+        self.graph.add_node(
+            "relevance_passed",
+            self.__relevance_checker.relevance_passed_handler,
+        )
+        self.graph.add_node(
+            "relevance_failed",
+            self.__relevance_checker.relevance_failed_handler,
+        )
+
+        # Define the graph flow
         
         # 1. Start with moderation
         self.graph.add_conditional_edges(
@@ -56,6 +67,14 @@ class RAGAgent:
             {
                 True: "moderation_passed",
                 False: "moderation_failed",
+            },
+        )
+
+        # 2. If moderation passes, check document relevance
+        self.graph.add_conditional_edges("moderation_passed", self.__relevance_checker.check_relevance,
+            {
+                True: "relevance_passed",
+                False: "relevance_failed",
             },
         )
 
