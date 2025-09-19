@@ -1,4 +1,5 @@
 """OpenAI service package."""
-from .summarization import summarize_document
+from .rag_agent import RAGAgent
+from .summarization import Summarizer
 
-__all__ = ["summarize_document"]
+__all__ = ["RAGAgent", "Summarizer"]
