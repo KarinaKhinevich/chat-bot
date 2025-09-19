@@ -1,46 +1,239 @@
 """OpenAI summarization service."""
-from langchain.prompts import PromptTemplate
+
+import logging
+from typing import Dict, List, Optional
+
+from langchain_core.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI
+from pydantic import BaseModel, Field
 
 from chat_bot.config import OpenAISettings
 
+logger = logging.getLogger(__name__)
 openai_settings = OpenAISettings()
 
 
-# Initialize OpenAI client
-llm = ChatOpenAI(
-    api_key=openai_settings.API_KEY,
-    model=openai_settings.MODEL_NAME,
-    temperature=openai_settings.TEMPERATURE,
-)
+class DocumentStructure(BaseModel):
+    """Structured representation of document analysis."""
 
-# System prompt for summarization
-SUMMARIZATION_PROMPT = PromptTemplate.from_template(
-    "You will receive a document as input. "
-    "Your task is to create a summary that is 2-3 times shorter than the original text, while keeping all the key points and the overall meaning."
-    "The summary must be written in the same language as the original document."
-    "Do not add any new information that is not in the document."
-    "You may rephrase and condense sentences, but make sure all important details remain."
-    "The style should be concise and clear, preserving the document's intent."
-    "Return only the summary, nothing else. "
-    "Document content: {document_content}"
-)
+    title: str = Field(
+        ...,
+        description="The main title or subject of the document. If no explicit title exists, create a descriptive one based on the content.",
+    )
 
-# Summarization chain
-summarizer_chain = SUMMARIZATION_PROMPT | llm
+    main_idea: str = Field(
+        ...,
+        description="The central theme or main idea of the document in 2-3 sentences.",
+    )
+
+    key_concepts: List[str] = Field(
+        ...,
+        description="List of 5-10 key concepts, topics, or themes discussed in the document.",
+    )
+
+    terms_and_definitions: Optional[Dict[str, str]] = Field(
+        default=None,
+        description="Important terms, acronyms, or specialized vocabulary with their definitions or explanations.",
+    )
+
+    main_points: List[str] = Field(
+        ...,
+        description="List of 5-7 main points or arguments presented in the document.",
+    )
+
+    conclusion: Optional[str] = Field(
+        default=None,
+        description="The conclusion or final thoughts from the document, if present.",
+    )
 
 
-async def summarize_document(content: str) -> str:
-    """
-    Summarize the given document content using OpenAI.
+class Summarizer:
+    """Document summarization service with structured analysis."""
 
-    Args:
-        content (str): The content of the document to summarize.
+    def __init__(self):
+        """Initialize the summarizer with structured output capability."""
+        try:
+            # LLM for structured document analysis
+            self.analysis_llm = ChatOpenAI(
+                api_key=openai_settings.API_KEY,
+                model=openai_settings.MODEL_NAME,
+                temperature=0.1,  # Low temperature for consistent structure
+            ).with_structured_output(DocumentStructure)
 
-    Returns:
-        str: The generated summary.
-    """
-    summary = await summarizer_chain.ainvoke({"document_content": content})
+            # Prompt for structured analysis
+            self.analysis_prompt = PromptTemplate.from_template(
+                """You are an expert document analyst. Analyze the following document and extract its key structural elements.
+The response should be in the same language as the input document.
+Document Content:
+{document_content}
 
-    # Extract and return the summary text
-    return summary.content
+Instructions:
+- Identify the main title or create a descriptive one if none exists
+- Extract the central theme and main idea
+- List key concepts and topics discussed
+- Identify important terms, acronyms, or specialized vocabulary with their meanings
+- Extract the main points or arguments
+- Identify any conclusion or final thoughts
+
+Analyze the document thoroughly and provide a structured breakdown of its content."""
+            )
+
+        except Exception as e:
+            logger.error(f"Failed to initialize summarizer: {str(e)}")
+            raise
+
+    async def analyze_document_structure(self, content: str) -> DocumentStructure:
+        """
+        Analyze document content and extract structured elements.
+
+        Args:
+            content: The document content to analyze
+
+        Returns:
+            DocumentStructure object with extracted elements
+
+        Raises:
+            Exception: If analysis fails
+        """
+        try:
+            logger.info("Starting structured document analysis")
+
+            if not content or not content.strip():
+                raise ValueError("Document content cannot be empty")
+
+            # Format the analysis prompt
+            prompt_input = self.analysis_prompt.format(document_content=content)
+
+            # Get structured analysis
+            analysis_result = await self.analysis_llm.ainvoke(prompt_input)
+
+            logger.info(
+                f"Document analysis completed. Title: '{analysis_result.title}'"
+            )
+            logger.info(f"Extracted {len(analysis_result.key_concepts)} key concepts")
+            logger.info(
+                f"Extracted {len(analysis_result.terms_and_definitions or {})} terms"
+            )
+            logger.info(f"Extracted {len(analysis_result.main_points)} main points")
+
+            return analysis_result
+
+        except Exception as e:
+            logger.error(f"Error during document structure analysis: {str(e)}")
+            raise
+
+    def combine_analysis_to_summary(self, analysis: DocumentStructure) -> str:
+        """
+        Combine structured analysis elements into a cohesive summary using Python.
+
+        Args:
+            analysis: DocumentStructure object with extracted elements
+
+        Returns:
+            Combined summary text
+        """
+        try:
+            logger.info("Combining structured analysis into final summary")
+
+            # Start building the summary
+            summary_parts = []
+
+            # Add title as header
+            if analysis.title:
+                summary_parts.append(f"**{analysis.title}**\n")
+
+            # Add main idea
+            if analysis.main_idea:
+                summary_parts.append(f"{analysis.main_idea}\n")
+
+            # Add main points
+            if analysis.main_points:
+                summary_parts.append("**Key Points:**")
+                for i, point in enumerate(analysis.main_points, 1):
+                    summary_parts.append(f"{i}. {point}")
+                summary_parts.append("")  # Empty line for spacing
+
+            # Add key concepts
+            if analysis.key_concepts:
+                concepts_text = ", ".join(analysis.key_concepts)
+                summary_parts.append(f"**Key Concepts:** {concepts_text}\n")
+
+            # Add terms and definitions
+            if analysis.terms_and_definitions:
+                summary_parts.append("**Important Terms:**")
+                for term, definition in analysis.terms_and_definitions.items():
+                    summary_parts.append(f"• **{term}**: {definition}")
+                summary_parts.append("")  # Empty line for spacing
+
+            # Add conclusion if present
+            if analysis.conclusion:
+                summary_parts.append(f"**Conclusion:** {analysis.conclusion}")
+
+            # Join all parts with newlines
+            final_summary = "\n".join(summary_parts).strip()
+
+            logger.info("Successfully combined analysis into summary")
+            return final_summary
+
+        except Exception as e:
+            logger.error(f"Error combining analysis to summary: {str(e)}")
+            return "Summary could not be generated."
+
+    async def summarize_document(self, content: str) -> str:
+        """
+        Perform complete document summarization with structured analysis.
+
+        This method combines structured document analysis with comprehensive
+        summary generation to produce high-quality summaries.
+
+        Args:
+            content: The document content to summarize
+
+        Returns:
+            Comprehensive summary text ready for database storage
+
+        Raises:
+            ValueError: If content is empty or invalid
+            Exception: If summarization process fails
+        """
+        try:
+            logger.info("Starting enhanced document summarization")
+
+            # Validate input
+            if not content or not content.strip():
+                raise ValueError("Document content cannot be empty")
+
+            if len(content.strip()) < 50:
+                logger.warning(
+                    "Document content is very short, proceeding with basic summarization"
+                )
+                # For very short documents, return the content as-is with minimal formatting
+                return f"**Summary:** {content.strip()}"
+
+            # Step 1: Analyze document structure
+            analysis = await self.analyze_document_structure(content)
+
+            # Step 2: Combine analysis into summary using Python
+            final_summary = self.combine_analysis_to_summary(analysis)
+
+            logger.info("Enhanced document summarization completed successfully")
+            return final_summary
+
+        except ValueError as ve:
+            logger.error(f"Validation error in document summarization: {str(ve)}")
+            raise
+        except Exception as e:
+            logger.error(f"Error in enhanced document summarization: {str(e)}")
+            # Fallback to simple text return
+            try:
+                logger.info("Attempting fallback to basic summary format")
+                return (
+                    f"**Summary:** {content[:500]}..."
+                    if len(content) > 500
+                    else f"**Summary:** {content}"
+                )
+            except Exception as fallback_error:
+                logger.error(
+                    f"Fallback summarization also failed: {str(fallback_error)}"
+                )
+                raise Exception(f"Document summarization failed: {str(e)}")

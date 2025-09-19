@@ -41,7 +41,7 @@ class TestDocumentService:
         assert result.filename == "test.txt"
         assert result.document_type == "txt"
         assert result.file_size == len(sample_txt_content)
-        assert "document_id" in result.dict()
+        assert "document_id" in result.model_dump()
 
     @pytest.mark.unit
     @pytest.mark.asyncio

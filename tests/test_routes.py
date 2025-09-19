@@ -139,6 +139,57 @@ class TestRoutes:
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
     @pytest.mark.unit
+    def test_chat_route_returns_html(self, client):
+        """
+        Test that chat route returns HTML response.
+
+        Args:
+            client: FastAPI test client fixture
+        """
+        response = client.get("/chat")
+
+        assert response.status_code == status.HTTP_200_OK
+        assert "text/html" in response.headers["content-type"]
+
+    @pytest.mark.unit
+    def test_chat_post_endpoint_structure(self, client):
+        """
+        Test chat POST endpoint with valid request structure.
+
+        Args:
+            client: FastAPI test client fixture
+        """
+        chat_request = {"question": "What is this document about?"}
+        
+        # Note: This will likely fail due to OpenAI dependency, but tests the route structure
+        response = client.post("/chat", json=chat_request)
+        
+        # Should not be 404 (route exists) or 422 (validation error)
+        assert response.status_code != status.HTTP_404_NOT_FOUND
+        assert response.status_code != status.HTTP_422_UNPROCESSABLE_ENTITY
+
+    @pytest.mark.unit
+    def test_chat_post_invalid_request(self, client):
+        """
+        Test chat POST endpoint with invalid request.
+
+        Args:
+            client: FastAPI test client fixture
+        """
+        # Test empty question
+        response = client.post("/chat", json={"question": ""})
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+        # Test missing question field
+        response = client.post("/chat", json={})
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+        # Test question too long
+        long_question = "x" * 501
+        response = client.post("/chat", json={"question": long_question})
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+    @pytest.mark.unit
     def test_invalid_route_returns_404(self, client):
         """
         Test that invalid routes return 404.
