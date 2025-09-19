@@ -39,13 +39,27 @@ class OpenAISettings(BaseSettings):
     """OpenAI configuration settings."""
 
     API_KEY: str
-    MODEL_NAME: str = "gpt-3.5-turbo"
+    MODEL_NAME: str = "gpt-4o"
     TEMPERATURE: float = 0
 
     class Config:
         """Pydantic configuration for environment variable prefix."""
 
         env_prefix = "OPENAI_"
+
+
+# Langchain settings
+class LangchainSettings(BaseSettings):
+    """Langchain configuration settings."""
+
+    API_KEY: str
+    TRACING_V2: bool = True
+    PROJECT_NAME: str = "chatbot_dev"
+
+    class Config:
+        """Pydantic configuration for environment variable prefix."""
+
+        env_prefix = "LANGCHAIN_"
 
 
 # Chunking settings

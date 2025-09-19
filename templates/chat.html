@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat - Document Assistant</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        .chat-container {
+            height: 70vh;
+            overflow-y: auto;
+            border: 1px solid #dee2e6;
+            border-radius: 10px;
+            background-color: #f8f9fa;
+        }
+        .message {
+            margin-bottom: 15px;
+            animation: fadeIn 0.3s ease-in;
+        }
+        .message.user {
+            text-align: right;
+        }
+        .message.assistant {
+            text-align: left;
+        }
+        .message-bubble {
+            display: inline-block;
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            word-wrap: break-word;
+        }
+        .message.user .message-bubble {
+            background-color: #0d6efd;
+            color: white;
+        }
+        .message.assistant .message-bubble {
+            background-color: white;
+            color: #333;
+            border: 1px solid #dee2e6;
+        }
+        .message-time {
+            font-size: 0.75rem;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+        .chat-input {
+            border-radius: 25px;
+            border: 2px solid #dee2e6;
+            padding: 12px 20px;
+            font-size: 16px;
+        }
+        .chat-input:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+        }
+        .send-btn {
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            border: none;
+            background-color: #0d6efd;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .send-btn:hover:not(:disabled) {
+            background-color: #0b5ed7;
+        }
+        .send-btn:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        .typing-indicator {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            color: #6c757d;
+            font-style: italic;
+        }
+        .typing-dots {
+            display: flex;
+            gap: 3px;
+        }
+        .typing-dot {
+            width: 6px;
+            height: 6px;
+            background-color: #6c757d;
+            border-radius: 50%;
+            animation: typing 1.5s infinite;
+        }
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+            }
+            30% {
+                transform: translateY(-10px);
+            }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .welcome-message {
+            text-align: center;
+            color: #6c757d;
+            padding: 2rem;
+        }
+        .document-count {
+            color: #0d6efd;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <div class="container mt-4">
+        <div class="row justify-content-center">
+            <div class="col-md-10 col-lg-8">
+                <!-- Header -->
+                <div class="text-center mb-4">
+                    <h1 class="h3 mb-3">
+                        <i class="bi bi-robot text-primary"></i>
+                        Document Assistant
+                    </h1>
+                    <p class="text-muted">Ask questions about your uploaded documents</p>
+                    {% if document_count > 0 %}
+                    <p class="small">
+                        <span class="document-count">{{ document_count }}</span> document{{ 's' if document_count != 1 else '' }} available for chat
+                    </p>
+                    {% else %}
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        No documents uploaded yet. <a href="/upload" class="alert-link">Upload documents</a> to start chatting.
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Chat Container -->
+                <div class="card shadow-sm">
+                    <div class="card-body p-0">
+                        <!-- Chat Messages -->
+                        <div id="chatContainer" class="chat-container p-3">
+                            {% if document_count > 0 %}
+                            <div class="welcome-message">
+                                <i class="bi bi-chat-heart fs-1 mb-3"></i>
+                                <h5>Welcome to Document Chat!</h5>
+                                <p class="mb-0">Start asking questions about your documents below.</p>
+                            </div>
+                            {% else %}
+                            <div class="welcome-message">
+                                <i class="bi bi-inbox fs-1 mb-3"></i>
+                                <h5>No Documents Available</h5>
+                                <p class="mb-0">Upload some documents first to start chatting.</p>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Typing Indicator -->
+                        <div id="typingIndicator" class="typing-indicator px-3 py-2">
+                            <div class="typing-dots">
+                                <div class="typing-dot"></div>
+                                <div class="typing-dot"></div>
+                                <div class="typing-dot"></div>
+                            </div>
+                            <span>Assistant is typing...</span>
+                        </div>
+
+                        <!-- Chat Input -->
+                        <div class="p-3 border-top">
+                            <form id="chatForm" class="d-flex gap-2">
+                                <input 
+                                    type="text" 
+                                    id="messageInput" 
+                                    class="form-control chat-input" 
+                                    placeholder="Type your question about the documents..."
+                                    {% if document_count == 0 %}disabled{% endif %}
+                                    autocomplete="off"
+                                    maxlength="500"
+                                >
+                                <button 
+                                    type="submit" 
+                                    id="sendBtn" 
+                                    class="send-btn"
+                                    {% if document_count == 0 %}disabled{% endif %}
+                                    title="Send message"
+                                >
+                                    <i class="bi bi-send"></i>
+                                </button>
+                            </form>
+                            <div class="text-muted small mt-2 text-center">
+                                Press Enter to send • Max 500 characters
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Navigation -->
+                <div class="text-center mt-4">
+                    <a href="/" class="btn btn-outline-secondary me-2">
+                        <i class="bi bi-house me-2"></i>
+                        Back to Home
+                    </a>
+                    <a href="/upload" class="btn btn-outline-primary">
+                        <i class="bi bi-upload me-2"></i>
+                        Upload Documents
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Chat functionality -->
+    <script>
+        // DOM elements
+        const chatContainer = document.getElementById('chatContainer');
+        const chatForm = document.getElementById('chatForm');
+        const messageInput = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const typingIndicator = document.getElementById('typingIndicator');
+
+        // Chat state
+        let isWaitingForResponse = false;
+
+        // Initialize chat
+        document.addEventListener('DOMContentLoaded', function() {
+            messageInput.focus();
+            
+            // Remove welcome message if there are already messages
+            const existingMessages = chatContainer.querySelectorAll('.message');
+            if (existingMessages.length > 0) {
+                const welcomeMessage = chatContainer.querySelector('.welcome-message');
+                if (welcomeMessage) {
+                    welcomeMessage.remove();
+                }
+            }
+        });
+
+        // Form submission handler
+        chatForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const message = messageInput.value.trim();
+            if (!message || isWaitingForResponse) {
+                return;
+            }
+
+            // Clear input and disable form
+            messageInput.value = '';
+            setFormEnabled(false);
+            
+            // Remove welcome message if it exists
+            const welcomeMessage = chatContainer.querySelector('.welcome-message');
+            if (welcomeMessage) {
+                welcomeMessage.remove();
+            }
+
+            // Add user message to chat
+            addMessage(message, 'user');
+
+            // Show typing indicator
+            showTypingIndicator();
+
+            try {
+                // Send message to backend
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ question: message })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    addMessage(data.answer, 'assistant');
+                    
+                    // Show sources if available
+                    if (data.sources && data.sources.length > 0) {
+                        const sourcesText = `\n\nSources: ${data.sources.join(', ')}`;
+                        addMessage(sourcesText, 'assistant', false, true);
+                    }
+                } else {
+                    const errorData = await response.json();
+                    addMessage(`Sorry, I encountered an error: ${errorData.detail || 'Unknown error'}`, 'assistant', true);
+                }
+            } catch (error) {
+                console.error('Error sending message:', error);
+                addMessage('Sorry, I\'m having trouble connecting right now. Please try again.', 'assistant', true);
+            } finally {
+                hideTypingIndicator();
+                setFormEnabled(true);
+                messageInput.focus();
+            }
+        });
+
+        // Add message to chat
+        function addMessage(text, sender, isError = false, isSmall = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            
+            const bubbleDiv = document.createElement('div');
+            bubbleDiv.className = 'message-bubble';
+            if (isError) {
+                bubbleDiv.style.backgroundColor = '#f8d7da';
+                bubbleDiv.style.color = '#721c24';
+                bubbleDiv.style.borderColor = '#f5c6cb';
+            }
+            if (isSmall) {
+                bubbleDiv.style.fontSize = '0.85rem';
+                bubbleDiv.style.fontStyle = 'italic';
+                bubbleDiv.style.opacity = '0.8';
+            }
+            bubbleDiv.textContent = text;
+            
+            const timeDiv = document.createElement('div');
+            timeDiv.className = 'message-time';
+            timeDiv.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            
+            messageDiv.appendChild(bubbleDiv);
+            if (!isSmall) {
+                messageDiv.appendChild(timeDiv);
+            }
+            chatContainer.appendChild(messageDiv);
+            
+            // Scroll to bottom
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // Show typing indicator
+        function showTypingIndicator() {
+            typingIndicator.style.display = 'flex';
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // Hide typing indicator
+        function hideTypingIndicator() {
+            typingIndicator.style.display = 'none';
+        }
+
+        // Enable/disable form
+        function setFormEnabled(enabled) {
+            isWaitingForResponse = !enabled;
+            messageInput.disabled = !enabled;
+            sendBtn.disabled = !enabled;
+            
+            if (enabled) {
+                sendBtn.innerHTML = '<i class="bi bi-send"></i>';
+            } else {
+                sendBtn.innerHTML = '<div class="spinner-border spinner-border-sm" role="status"></div>';
+            }
+        }
+
+        // Character counter for input
+        messageInput.addEventListener('input', function() {
+            const remaining = 500 - this.value.length;
+            if (remaining < 50) {
+                // Could add character count display here
+            }
+        });
+
+        // Auto-resize input (optional enhancement)
+        messageInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                chatForm.dispatchEvent(new Event('submit'));
+            }
+        });
+    </script>
+</body>
+</html>

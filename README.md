@@ -10,37 +10,45 @@ A modern FastAPI-based document processing system with vector search capabilitie
 - [Installation & Setup](#installation--setup)
 - [Usage](#usage)
   - [Web Interface](#web-interface)
+  - [Chat Interface](#chat-interface)
   - [API Usage](#api-usage)
 - [API Documentation](#api-documentation)
 - [Testing](#testing)
 - [Project Structure](#project-structure)
 - [Document Processing Pipeline](#document-processing-pipeline)
+- [RAG Pipeline](#rag-pipeline)
 - [Deployment](#deployment)
 - [Configuration](#configuration)
 - [Monitoring & Health](#monitoring--health)
+- [Troubleshooting](#troubleshooting)
+- [Known Limitations & Future Development](#known-limitations--future-development)
 - [Contributing](#contributing)
 
 ## Features
 
 - **Document Upload & Processing**: Support for PDF and TXT file uploads with intelligent parsing
-- **Vector Search**: Document embeddings using OpenAI's text-embedding-3-small model
-- **Intelligent Chunking**: Multiple chunking strategies (general and semantic)
+- **AI-Powered Chat Interface**: Interactive chat with uploaded documents using RAG (Retrieval-Augmented Generation)
+- **Vector Search**: Document embeddings using OpenAI's text-embedding-3-small model for semantic search
+- **Intelligent Chunking**: Multiple chunking strategies (general and semantic) for optimal context retrieval
 - **AI-Powered Summaries**: Automatic document summarization using OpenAI GPT models
 - **Async Architecture**: Built with FastAPI and async SQLAlchemy for high performance
 - **PostgreSQL + pgvector**: Vector database for semantic search capabilities
-- **Web Interface**: Clean HTML interface for document management
-- **RESTful API**: Comprehensive API with documentation
+- **Modern Web Interface**: Clean, responsive HTML interface with Bootstrap styling
+- **Content Moderation**: Built-in content filtering for safe AI interactions
+- **RESTful API**: Comprehensive API with interactive documentation
 - **Production Ready**: Docker containerization with health checks and monitoring
+- **Comprehensive Testing**: 74+ tests covering all major functionality with 70%+ coverage
 
 ## Tech Stack
 
 ### Backend
-- **FastAPI**: Modern async web framework
-- **SQLAlchemy 2.0**: Async ORM with PostgreSQL
-- **pgvector**: PostgreSQL extension for vector operations
-- **LangChain**: Document processing and text splitting
-- **OpenAI**: Embeddings and text generation
-- **Pydantic**: Data validation and settings management
+- **FastAPI**: Modern async web framework with automatic API documentation
+- **SQLAlchemy 2.0**: Async ORM with PostgreSQL integration
+- **pgvector**: PostgreSQL extension for vector operations and similarity search
+- **LangChain**: Document processing, text splitting, and RAG pipeline implementation
+- **LangGraph**: Stateful graph framework for complex AI workflows
+- **OpenAI**: GPT models for chat, embeddings (text-embedding-3-small), and summarization
+- **Pydantic**: Data validation, settings management, and API schema definition
 
 ### Database
 - **PostgreSQL**: Primary database with pgvector extension
@@ -48,15 +56,18 @@ A modern FastAPI-based document processing system with vector search capabilitie
 - **AsyncPG**: Async PostgreSQL driver
 
 ### Frontend
-- **Jinja2**: Server-side templating
-- **Bootstrap**: Responsive UI components
-- **JavaScript**: Interactive file upload and management
+- **Jinja2**: Server-side templating for dynamic HTML generation
+- **Bootstrap 5**: Responsive UI components and modern styling
+- **Bootstrap Icons**: Comprehensive icon library for enhanced UX
+- **JavaScript (Vanilla)**: Interactive chat interface, file upload, and real-time features
+- **CSS3**: Custom animations, responsive design, and modern UI effects
 
 ### DevOps
-- **Docker & Docker Compose**: Containerization
-- **Poetry**: Dependency management
-- **Pre-commit**: Code quality hooks
-- **Pytest**: Async testing framework
+- **Docker & Docker Compose**: Multi-service containerization with health checks
+- **Poetry**: Dependency management and virtual environment handling
+- **Pre-commit**: Automated code quality hooks (Black, isort, Flake8)
+- **Pytest**: Comprehensive async testing framework with 74+ tests
+- **Alembic**: Database schema migrations and version control
 
 ## Prerequisites
 
@@ -86,6 +97,11 @@ POSTGRES_PORT=5432
 
 # OpenAI Configuration
 OPENAI_API_KEY=your_openai_api_key
+
+# LangChain configuration for tracing
+LANGCHAIN_API_KEY=your_langchain_api_key
+LANGCHAIN_TRACING_V2=True
+LANGCHAIN_PROJECT_NAME=chatbot_dev
 ```
 
 ### 3. Using Docker (Recommended)
@@ -124,6 +140,7 @@ Access the main dashboard at `http://localhost:8000/`
 - View all uploaded documents
 - Document metadata display (filename, size, type, upload date)
 - Quick access to document actions
+- Quick access to chat interface
 - Responsive design for all screen sizes
 
 #### 2. Document Upload
@@ -153,6 +170,29 @@ From the main dashboard, you can:
 
 ![](readme-media/delete_document.png)
 
+#### 4. AI Document Chat
+Access the chat interface at `http://localhost:8000/chat`
+
+![](readme-media/chat_interface.png)
+
+### Chat Interface
+
+The application features a sophisticated AI-powered chat interface that allows you to ask questions about your uploaded documents.
+
+**Chat Features:**
+- **Real-time Messaging**: Interactive chat interface with typing indicators
+- **Smart Question Processing**: AI-powered question understanding and context analysis
+- **Content Moderation**: Built-in filtering for appropriate interactions
+
+#### RAG Pipeline Features
+The chat system uses an advanced Retrieval-Augmented Generation (RAG) pipeline:
+
+1. **Content Moderation**: Filters inappropriate questions before processing
+2. **Semantic Search**: Finds relevant document chunks using vector similarity
+3. **Relevance Checking**: Validates if retrieved content can answer the question
+4. **Answer Generation**: Creates contextual responses using OpenAI's GPT models
+
+![](readme-media/chat_conversation.png)
 
 ### API Usage
 
@@ -180,6 +220,13 @@ curl -X GET "http://localhost:8000/documents/{document_id}/summary"
 curl -X DELETE "http://localhost:8000/documents/{document_id}"
 ```
 
+**Ask Questions (Chat):**
+```bash
+curl -X POST "http://localhost:8000/chat" \
+  -H "Content-Type: application/json" \
+  -d '{"question": "What is this document about?"}'
+```
+
 ## API Documentation
 
 ### Interactive API Documentation
@@ -198,10 +245,16 @@ Once the application is running, access the interactive API documentation:
 | Method | Endpoint | Description | Parameters |
 |--------|----------|-------------|------------|
 | POST | `/document` | Upload a new document | `file` (multipart/form-data) |
-| GET | `/documents` | List all documents | None |
-| GET | `/documents/{id}` | Get document details | `id` (path parameter) |
+| GET | `/documents` | List all documents | `skip`, `limit` (query parameters) |
 | GET | `/documents/{id}/summary` | Get document summary | `id` (path parameter) |
 | DELETE | `/documents/{id}` | Delete document | `id` (path parameter) |
+
+#### Chat & AI
+
+| Method | Endpoint | Description | Parameters |
+|--------|----------|-------------|------------|
+| GET | `/chat` | Chat interface page | None |
+| POST | `/chat` | Ask question about documents | `question` (JSON body) |
 
 #### Health Check
 
@@ -216,10 +269,34 @@ Once the application is running, access the interactive API documentation:
 {
     "document_id": "123e4567-e89b-12d3-a456-426614174000",
     "filename": "example.pdf",
-    "content_type": "application/pdf",
-    "size": 1024576,
-    "created_at": "2024-01-15T10:30:00Z",
-    "summary": "This document discusses..."
+    "document_type": "pdf",
+    "file_size": 1024576,
+    "success": true
+}
+```
+
+**Chat Response:**
+```json
+{
+    "answer": "In object-oriented programming, a metaclass is a class whose instances are classes themselves"
+}
+```
+
+**Document List:**
+```json
+{
+    "success": true,
+    "documents": [
+        {
+            "document_id": "123e4567-e89b-12d3-a456-426614174000",
+            "filename": "example.pdf",
+            "document_type": "pdf",
+            "file_size": 1024576,
+            "upload_timestamp": "2024-01-15T10:30:00Z",
+            "summary": "This document discusses..."
+        }
+    ],
+    "total": 1
 }
 ```
 
@@ -232,34 +309,56 @@ Once the application is running, access the interactive API documentation:
 
 ## Testing
 
-### Running Tests
+### Comprehensive Test Coverage
 
-The project includes comprehensive test coverage for all core functionality:
+The project includes **74+ tests** with comprehensive coverage across all core functionality:
 
 ```bash
 # Run all tests
 poetry run pytest
-#Or using Make
+# Or using Make
 make test
 
+# Run with coverage report
+poetry run pytest --cov=chat_bot --cov-report=html
+
+# Run specific test categories
+poetry run pytest -m unit           # Unit tests
+poetry run pytest -m integration    # Integration tests
+
 # Run specific test file
-poetry run pytest tests/test_document_service.py
+poetry run pytest tests/test_chat_service.py
 
 # Run tests with verbose output
 poetry run pytest -v
-#Or using Make
+# Or using Make  
 make test-verbose
 ```
 
 ![](readme-media/tests.png)
 
-### Test Configuration
+### Coverage Metrics
+![](readme-media/test_coverage.png)
 
-Tests use SQLite for isolation and include:
-- Async database fixtures
-- Mocked external services (OpenAI)
-- Temporary file handling
-- Comprehensive error scenario coverage
+
+### Testing Best Practices
+
+**Quality Assurance:**
+- All new features require corresponding tests
+- Minimum 70% test coverage for new code
+- Integration tests for API endpoints
+- Unit tests for business logic
+- Error scenario coverage
+
+**Test Structure:**
+```bash
+tests/
+├── conftest.py              # Shared fixtures and configuration
+├── test_chat_service.py     # Chat and RAG functionality
+├── test_document_*.py       # Document processing and management
+├── test_integration.py      # End-to-end workflows
+└── test_*.py               # Specific component tests
+```
 
 ## Project Structure
 
@@ -269,35 +368,54 @@ chat-bot/
 │   ├── config/                    # Configuration settings
 │   │   └── settings.py            # Environment-based configuration
 │   ├── core/                      # Core utilities and constants
-│   │   └── constants.py           # Application constants
+│   │   ├── constants.py           # Application constants
+│   │   └── enums.py               # Enumeration definitions
 │   ├── document_processing/       # Document processing pipeline
 │   │   ├── chunker/               # Text chunking strategies
+│   │   │   └── document_chunker.py # Smart document chunking
 │   │   └── parser/                # Document parsers (PDF, TXT)
+│   │       ├── document_parser.py # Universal document parser
+│   │       └── parsers/           # Specific format parsers
 │   ├── models/                    # SQLAlchemy models
 │   │   └── document.py            # Document database model
 │   ├── schemas/                   # Pydantic schemas
+│   │   ├── chat.py                # Chat request/response schemas
 │   │   ├── common.py              # Common response schemas
 │   │   ├── document.py            # Document-related schemas
 │   │   └── health.py              # Health check schemas
 │   ├── services/                  # Business logic layer
+│   │   ├── chat_service.py        # Chat service with RAG integration
 │   │   ├── document_service.py    # Document CRUD operations
 │   │   ├── pg_document_service.py # Vector operations service
-│   │   └── openai_service.py      # OpenAI integration
+│   │   └── openai_service/        # OpenAI integration services
+│   │       ├── rag_agent/         # RAG pipeline implementation
+│   │       │   ├── nodes/         # LangGraph node implementations
+│   │       │   ├── rag_agent.py   # Main RAG agent class
+│   │       │   ├── state.py       # Graph state management
+│   │       │   └── tools.py       # Retrieval tools
+│   │       └── summarization.py   # Document summarization
 │   ├── utils/                     # Utility functions
 │   │   └── file_handler.py        # File validation and processing
 │   ├── database.py                # Database connection and setup
 │   ├── main.py                    # FastAPI application entry point
 │   └── routes.py                  # API route definitions
-├── tests/                         # Test suite
+├── tests/                         # Comprehensive test suite (74+ tests)
 │   ├── conftest.py                # Pytest configuration and fixtures
-│   ├── test_health.py             # Health endpoint tests
+│   ├── test_chat_service.py       # Chat service tests
+│   ├── test_document_processing.py # Document processing tests
 │   ├── test_document_service.py   # Service layer tests
 │   ├── test_document_upload.py    # Document upload tests
+│   ├── test_file_validation.py    # File validation tests
+│   ├── test_health.py             # Health endpoint tests
+│   ├── test_integration.py        # Integration workflow tests
+│   ├── test_pg_document_service.py # Vector service tests
 │   └── test_routes.py             # Route integration tests
 ├── templates/                     # HTML templates
+│   ├── chat.html                  # Interactive chat interface
 │   ├── home.html                  # Main dashboard
 │   └── upload.html                # Upload interface
 ├── alembic/                       # Database migrations
+├── readme-media/                  # Documentation screenshots
 ├── docker-compose.yaml            # Docker services configuration
 ├── Dockerfile                     # Application container
 ├── pyproject.toml                 # Project dependencies and configuration
@@ -335,16 +453,65 @@ The application follows a sophisticated document processing workflow:
    - **Synchronized Operations**: Consistent data across storage systems
    - **Transaction Safety**: Rollback capabilities for failed operations
 
+## RAG Pipeline
+
+The application implements a sophisticated **Retrieval-Augmented Generation (RAG)** pipeline using LangGraph for stateful workflow management. This ensures high-quality, contextual responses to user questions.
+
+### RAG Architecture
+
+The RAG system processes questions through multiple stages to ensure accuracy and safety:
+
+![](readme-media/rag_pipeline_diagram.png)
+
+### Pipeline Stages
+
+#### 1. Content Moderation
+- **Purpose**: Filter inappropriate or harmful questions
+- **Implementation**: OpenAI moderation API integration
+- **Action**: Blocks unsafe content before processing
+- **Fallback**: Provides appropriate safety message to users
+
+#### 2. Document Retrieval
+- **Strategy**: Semantic search using vector embeddings
+- **Model**: OpenAI text-embedding-3-small for query encoding
+- **Storage**: PostgreSQL with pgvector extension
+- **Configuration**: Retrieval of top-k most relevant chunks (configurable)
+
+#### 3. Relevance Assessment
+- **Purpose**: Evaluate if retrieved documents can answer the question
+- **Method**: AI-powered relevance scoring
+- **Threshold**: Configurable relevance score for quality control
+- **Handling**: Graceful responses when content is insufficient
+
+#### 4. Answer Generation
+- **Model**: OpenAI GPT models for natural language generation
+- **Context**: Uses only relevant, retrieved document chunks
+- **Constraints**: Answers strictly based on provided documents
+- **Output**: Structured response with source attribution
+
+
 ## Deployment
 
 ### Docker Deployment
 
-The application is fully containerized for easy deployment
+The application is fully containerized for easy deployment with chat and RAG capabilities.
+
+#### Prerequisites
+- Docker and Docker Compose installed
+- OpenAI API key for chat functionality
+- Sufficient resources for vector operations
 
 #### Quick Start
 ```bash
+# Create environment file
+cp .env.example .env
+# Edit .env with OpenAI API key and other settings
+
 # Start all services
-docker-compose up -d
+docker-compose up -d --build
+
+# Run database migrations
+docker-compose exec app alembic upgrade head
 
 # View logs
 docker-compose logs -f app
@@ -388,23 +555,10 @@ docker-compose down
 | `POSTGRES_HOST` | Database host | `db` |
 | `POSTGRES_PORT` | Database port | `5432` |
 | `OPENAI_API_KEY` | OpenAI API authentication | - |
+| `LANGCHAIN_API_KEY` | LangChain API authentication | - |
+| `LANGCHAIN_TRACING_V2` | Enabling LangSmith tracing | True |
+| `LANGCHAIN_PROJECT_NAME` | Project name for tracing | `chatbot_dev` |
 
-
-### Application Settings
-
-The application automatically configures based on the environment:
-
-```python
-# Development settings
-DEBUG = True
-LOG_LEVEL = "DEBUG"
-RELOAD = True
-
-# Production settings  
-DEBUG = False
-LOG_LEVEL = "INFO"
-RELOAD = False
-```
 
 ### Development Tools
 
@@ -465,6 +619,155 @@ docker-compose logs app | grep ERROR
 docker-compose logs db
 ```
 
+## Known Limitations & Future Development
+
+### Current Limitations
+
+#### **Security & Authentication**
+- **No User Management**: Single-tenant system without user accounts or authentication
+- **Open API Access**: All endpoints are publicly accessible without authorization
+- **Session Management**: No persistent user sessions or state management
+- **CORS Policy**: Permissive CORS settings suitable only for development
+
+#### **Chat System Limitations**
+- **No Chat History**: Messages are not permanently stored between sessions
+- **No Thread Management**: Each question is independent without conversation context
+- **Limited Memory**: No conversation continuity or follow-up question handling
+- **Single Session**: No support for multiple concurrent conversations
+
+#### **Data Management Issues**
+- **Duplicate Documents**: No detection or prevention of duplicate file uploads
+- **Transaction Consistency**: Separate database operations without distributed transactions
+- **Data Integrity**: Potential inconsistency between PostgreSQL and vector store
+- **Cleanup Limitations**: Manual intervention needed for orphaned data
+
+#### **Monitoring & Evaluation**
+- **No User Feedback**: Missing feedback collection for chat responses
+- **Limited Analytics**: Basic logging without comprehensive performance metrics
+- **No A/B Testing**: No experimentation framework for RAG improvements
+- **Missing Evaluation**: No automated quality assessment of generated responses
+
+### Planned Improvements
+
+#### **Phase 1: Security & User Management**
+1. **User Authentication & Authorization**
+   - Implement JWT-based authentication system
+   - Add user registration and login functionality
+   - Role-based access control (RBAC) for different user types
+   - Password reset and email verification flows
+
+2. **API Security Enhancements**
+   - Rate limiting implementation using Redis or in-memory stores
+   - API key management for programmatic access
+   - CORS policy refinement for production environments
+   - Input validation and sanitization improvements
+
+3. **Session Management**
+   - Secure session handling with HTTP-only cookies
+   - Session timeout and refresh token mechanisms
+   - Multi-device session management
+
+#### **Phase 2: Enhanced Chat System**
+1. **Persistent Chat History**
+   ```python
+   # Implementation using PostgresChatMessageHistory
+   from langchain_postgres import PostgresChatMessageHistory
+   
+   # Store messages with thread IDs for conversation continuity
+   chat_history = PostgresChatMessageHistory(
+       connection_string=DATABASE_URL,
+       session_id=user_session_id,
+       table_name="chat_messages"
+   )
+   ```
+
+2. **OpenAI Thread Integration**
+   - Integrate with OpenAI Assistants API for native thread management
+   - Support for conversation context and follow-up questions
+   - Chat history export and import functionality
+   - Ability to reset conversation threads
+
+3. **Enhanced Chat Features**
+   - Message reactions and feedback collection
+   - Chat export functionality (PDF, TXT, JSON)
+   - Search within chat history
+   - Conversation summarization
+
+#### **Phase 3: Data Integrity & Performance**
+1. **Document Duplicate Detection**
+   ```python
+   # Hash-based duplicate detection
+   import hashlib
+   
+   def detect_duplicate(content: str, filename: str) -> bool:
+       content_hash = hashlib.sha256(content.encode()).hexdigest()
+       # Check against existing document hashes
+       return await check_duplicate_hash(content_hash)
+   ```
+
+2. **Distributed Transactions**
+   ```python
+   # Implement two-phase commit for PostgreSQL + Vector store
+   async def atomic_document_operation():
+       async with database_transaction():
+           async with vector_store_transaction():
+               # Coordinated operations across both stores
+               pass
+   ```
+
+3. **Advanced Document Processing**
+   - Support for additional file formats (DOCX, PPTX, HTML)
+   - Document versioning and change tracking
+   - Batch document processing capabilities
+   - Document relationship mapping
+
+#### **Phase 4: Monitoring & Evaluation**
+1. **LangSmith Integration**
+   ```python
+   # Online evaluation with LangSmith
+   from langsmith.client import Client
+   
+   client = Client()
+   
+   # Track RAG performance metrics
+   def evaluate_rag_response(response: dict, run_id: str) -> str:
+      for evaluator in online_rag_evaluators:
+         with tracing_v2_enabled(project_name="evaluators"):
+               grade = evaluator(response)
+
+         langsmith_client.create_feedback(
+               run_id,
+               key="RAG_" + evaluator.__name__,
+               score=grade.get("score"),
+               comment=grade.get("explanation"),
+         )
+   ```
+
+2. **User Feedback System**
+   - Thumbs up/down rating for chat responses
+   - Detailed feedback forms for quality improvement
+   - Feedback analytics dashboard
+   - Response improvement based on user input
+
+3. **Golden Dataset Evaluation**
+   ```python
+   # Offline evaluation using curated datasets
+   async def run_offline_evaluation():
+      evaluation_results = langsmith_client.evaluate(
+      target,
+      data=EVALUATION_DATASET_NAME,
+      evaluators=[
+         evaluate_correctness,
+         evaluate_groundedness,
+         evaluate_retrieval_relevance,
+        ],
+      experiment_prefix=EVALUATION_PREFIX,
+      )
+
+      return evaluation_results
+
+   ```
+
 ## Contributing
 
 ### Development Workflow
@@ -487,7 +790,7 @@ docker-compose logs db
 
 ### Testing Requirements
 
-- Minimum 80% test coverage
+- Minimum 70% test coverage
 - All new features must include tests
 - Integration tests for API endpoints
 - Unit tests for business logic

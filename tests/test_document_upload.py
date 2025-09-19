@@ -12,10 +12,10 @@ class TestDocumentUpload:
 
     @pytest.mark.unit
     @patch("chat_bot.routes.PGDocumentService")
-    @patch("chat_bot.routes.summarize_document")
+    @patch("chat_bot.routes.Summarizer")
     @patch("chat_bot.routes.DocumentParser")
     def test_upload_txt_success(
-        self, mock_parser, mock_summarize, mock_pg_service, client, sample_txt_content
+        self, mock_parser, mock_summarizer, mock_pg_service, client, sample_txt_content
     ):
         """
         Test successful TXT file upload.
@@ -32,7 +32,9 @@ class TestDocumentUpload:
             {"title": "test.txt", "chunk_index": 0},
         )
 
-        mock_summarize.return_value = "Test summary"
+        mock_summarizer_instance = AsyncMock()
+        mock_summarizer.return_value = mock_summarizer_instance
+        mock_summarizer_instance.summarize_document.return_value = "Test summary"
 
         mock_pg_service_instance = AsyncMock()
         mock_pg_service.return_value = mock_pg_service_instance
@@ -52,10 +54,10 @@ class TestDocumentUpload:
 
     @pytest.mark.unit
     @patch("chat_bot.routes.PGDocumentService")
-    @patch("chat_bot.routes.summarize_document")
+    @patch("chat_bot.routes.Summarizer")
     @patch("chat_bot.routes.DocumentParser")
     def test_upload_pdf_success(
-        self, mock_parser, mock_summarize, mock_pg_service, client, sample_pdf_content
+        self, mock_parser, mock_summarizer, mock_pg_service, client, sample_pdf_content
     ):
         """
         Test successful PDF file upload.
@@ -72,7 +74,9 @@ class TestDocumentUpload:
             {"title": "test.pdf", "chunk_index": 0},
         )
 
-        mock_summarize.return_value = "PDF summary"
+        mock_summarizer_instance = AsyncMock()
+        mock_summarizer.return_value = mock_summarizer_instance
+        mock_summarizer_instance.summarize_document.return_value = "PDF summary"
 
         mock_pg_service_instance = AsyncMock()
         mock_pg_service.return_value = mock_pg_service_instance
@@ -130,10 +134,10 @@ class TestDocumentUpload:
 
     @pytest.mark.unit
     @patch("chat_bot.routes.PGDocumentService")
-    @patch("chat_bot.routes.summarize_document")
+    @patch("chat_bot.routes.Summarizer")
     @patch("chat_bot.routes.DocumentParser")
     def test_upload_with_summary_generation_failure(
-        self, mock_parser, mock_summarize, mock_pg_service, client, sample_txt_content
+        self, mock_parser, mock_summarizer, mock_pg_service, client, sample_txt_content
     ):
         """
         Test upload when summary generation fails but upload continues.
@@ -151,7 +155,9 @@ class TestDocumentUpload:
         )
 
         # Make summary generation fail
-        mock_summarize.side_effect = Exception("Summary generation failed")
+        mock_summarizer_instance = AsyncMock()
+        mock_summarizer.return_value = mock_summarizer_instance
+        mock_summarizer_instance.summarize_document.side_effect = Exception("Summary generation failed")
 
         mock_pg_service_instance = AsyncMock()
         mock_pg_service.return_value = mock_pg_service_instance
@@ -185,10 +191,10 @@ class TestDocumentUpload:
 
     @pytest.mark.unit
     @patch("chat_bot.routes.PGDocumentService")
-    @patch("chat_bot.routes.summarize_document")
+    @patch("chat_bot.routes.Summarizer")
     @patch("chat_bot.routes.DocumentParser")
     def test_list_documents_with_content(
-        self, mock_parser, mock_summarize, mock_pg_service, client, sample_txt_content
+        self, mock_parser, mock_summarizer, mock_pg_service, client, sample_txt_content
     ):
         """
         Test listing documents after uploading one.
@@ -205,7 +211,9 @@ class TestDocumentUpload:
             {"title": "test.txt", "chunk_index": 0},
         )
 
-        mock_summarize.return_value = "Test summary"
+        mock_summarizer_instance = AsyncMock()
+        mock_summarizer.return_value = mock_summarizer_instance
+        mock_summarizer_instance.summarize_document.return_value = "Test summary"
 
         mock_pg_service_instance = AsyncMock()
         mock_pg_service.return_value = mock_pg_service_instance
@@ -247,12 +255,12 @@ class TestDocumentUpload:
     @pytest.mark.integration
     @pytest.mark.asyncio
     @patch("chat_bot.routes.PGDocumentService")
-    @patch("chat_bot.routes.summarize_document")
+    @patch("chat_bot.routes.Summarizer")
     @patch("chat_bot.routes.DocumentParser")
     async def test_upload_async(
         self,
         mock_parser,
-        mock_summarize,
+        mock_summarizer,
         mock_pg_service,
         async_client,
         sample_txt_content,
@@ -272,7 +280,9 @@ class TestDocumentUpload:
             {"title": "async_test.txt", "chunk_index": 0},
         )
 
-        mock_summarize.return_value = "Async test summary"
+        mock_summarizer_instance = AsyncMock()
+        mock_summarizer.return_value = mock_summarizer_instance
+        mock_summarizer_instance.summarize_document.return_value = "Async test summary"
 
         mock_pg_service_instance = AsyncMock()
         mock_pg_service.return_value = mock_pg_service_instance

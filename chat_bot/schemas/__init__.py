@@ -5,6 +5,7 @@ This package contains all Pydantic models used for request/response validation
 and serialization in the FastAPI application.
 """
 
+from .chat import ChatError, ChatRequest, ChatResponse
 from .common import BaseResponse, ErrorResponse
 from .document import (
     DocumentContentResponse,
@@ -24,4 +25,7 @@ __all__ = [
     "DocumentInfo",
     "DocumentListResponse",
     "DocumentContentResponse",
+    "ChatRequest",
+    "ChatResponse",
+    "ChatError",
 ]
