@@ -18,8 +18,12 @@ from chat_bot.schemas import (
     DocumentUploadResponse,
     HealthCheck,
 )
-from chat_bot.services import DocumentService, PGDocumentService, summarize_document
-from chat_bot.services.openai_service.chat_service import ChatService
+from chat_bot.services import (
+    ChatService,
+    DocumentService,
+    PGDocumentService,
+    Summarizer,
+)
 from chat_bot.utils import validate_file
 
 # Configure logging
@@ -189,8 +193,9 @@ async def upload_document(
         page_content, metadata = await document_parser.parse(file, document_type)
 
         # Generate summary using OpenAI (with fallback)
+        summarizer = Summarizer()
         try:
-            summary = await summarize_document(page_content)
+            summary = await summarizer.summarize_document(page_content)
         except Exception as e:
             # If summary generation fails, use empty string
             summary = ""
