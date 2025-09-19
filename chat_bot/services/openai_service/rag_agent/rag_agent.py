@@ -1,6 +1,7 @@
 import logging
 
 from langgraph.graph import StateGraph, START, END
+from .nodes import Moderation
 from .state import State
 
 logger = logging.getLogger(__name__)
@@ -27,6 +28,7 @@ class RAGAgent:
         Args:
             streaming_mode: If True, enables streaming responses.
         """
+        self.__moderation = Moderation()
         self.__langgraph_init()
 
     def __langgraph_init(self):
@@ -34,6 +36,28 @@ class RAGAgent:
 
         # Initialize the state graph with the defined state schema
         self.graph = StateGraph(state_schema=State)
+
+        # Add moderation nodes
+        self.graph.add_node(
+            "moderation_passed",
+            self.__moderation.moderation_passed_handler,
+        )
+        self.graph.add_node(
+            "moderation_failed",
+            self.__moderation.moderation_failed_handler,
+        )
+
+          # Define the graph flow
+        
+        # 1. Start with moderation
+        self.graph.add_conditional_edges(
+            START,
+            self.__moderation.moderate,
+            {
+                True: "moderation_passed",
+                False: "moderation_failed",
+            },
+        )
 
 
     async def invoke_agent(self, query: str, retrieval_k: int = 5) -> dict:

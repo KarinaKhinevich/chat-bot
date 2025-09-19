@@ -8,3 +8,6 @@ ALLOWED_MIME_TYPES = {
     "application/pdf": DocumentTypeEnum.PDF,
     "text/plain": DocumentTypeEnum.TXT,
 }
+
+# Moderation message for inappropriate content
+MODERATION_MESSAGE = "I'm sorry, but I can't assist with that kind of request. Moderation has flagged the content as inappropriate."
