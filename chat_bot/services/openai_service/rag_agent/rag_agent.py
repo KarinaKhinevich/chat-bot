@@ -1,7 +1,7 @@
 import logging
 
 from langgraph.graph import StateGraph, START, END
-from .nodes import Moderation, RelevanceChecker
+from .nodes import Moderation, RelevanceChecker, AnswerGenerator
 from .state import State
 
 logger = logging.getLogger(__name__)
@@ -30,6 +30,7 @@ class RAGAgent:
         """
         self.__moderation = Moderation()
         self.__relevance_checker = RelevanceChecker()
+        self.__answer_generator = AnswerGenerator()
         self.__langgraph_init()
 
     def __langgraph_init(self):
@@ -57,6 +58,12 @@ class RAGAgent:
             "relevance_failed",
             self.__relevance_checker.relevance_failed_handler,
         )
+        
+        # Add answer generation node
+        self.graph.add_node(
+            "generate_answer",
+            self.__answer_generator.generate_answer,
+        )
 
         # Define the graph flow
         
@@ -78,6 +85,13 @@ class RAGAgent:
             },
         )
 
+        # 3. If relevant, generate answer
+        self.graph.add_edge("relevance_passed", "generate_answer")
+
+        # 4. End edges
+        self.graph.add_edge("moderation_failed", END)
+        self.graph.add_edge("relevance_failed", END)
+        self.graph.add_edge("generate_answer", END)
 
     async def invoke_agent(self, query: str, retrieval_k: int = 5) -> dict:
         """
