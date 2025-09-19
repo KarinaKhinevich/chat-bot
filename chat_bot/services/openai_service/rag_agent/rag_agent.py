@@ -1,11 +1,15 @@
 import logging
 
+from langchain_core.tracers.context import tracing_v2_enabled
 from langgraph.graph import StateGraph, START, END
+
+from chat_bot.config import LangchainSettings
 from .nodes import Moderation, RelevanceChecker, AnswerGenerator
 from .state import State
 
 logger = logging.getLogger(__name__)
 
+langchain_settings = LangchainSettings()
 
 class RAGAgent:
     """
@@ -111,7 +115,9 @@ class RAGAgent:
         try:
             # Compile and run the graph
             app = self.graph.compile()
-            result = await app.ainvoke({"input": query, "retrieval_k": retrieval_k})
+            # Enable tracing for enhanced observability of entire RAG process
+            with tracing_v2_enabled(project_name=langchain_settings.PROJECT_NAME):
+                result = await app.ainvoke({"input": query, "retrieval_k": retrieval_k})
 
             logger.info(f"RAG agent completed processing for query: {query[:50]}...")
             return result

@@ -1,5 +1,5 @@
 """Configuration package."""
 
-from .settings import ChunkingSettings, DBSettings, OpenAISettings
+from .settings import ChunkingSettings, DBSettings, OpenAISettings, LangchainSettings
 
-__all__ = ["OpenAISettings", "DBSettings", "ChunkingSettings"]
+__all__ = ["OpenAISettings", "DBSettings", "ChunkingSettings", "LangchainSettings"]

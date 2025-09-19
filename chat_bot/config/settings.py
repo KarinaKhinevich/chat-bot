@@ -47,6 +47,18 @@ class OpenAISettings(BaseSettings):
 
         env_prefix = "OPENAI_"
 
+# Langchain settings
+class LangchainSettings(BaseSettings):
+    """Langchain configuration settings."""
+    
+    API_KEY: str
+    TRACING_V2: bool = True
+    PROJECT_NAME: str = "chatbot_dev"
+
+    class Config:
+        """Pydantic configuration for environment variable prefix."""
+
+        env_prefix = "LANGCHAIN_"
 
 # Chunking settings
 class ChunkingSettings(BaseSettings):
