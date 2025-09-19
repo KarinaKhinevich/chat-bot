@@ -72,11 +72,12 @@ Answer:"""
             # Generate answer using LLM
             prompt = self.answer_prompt.format(context=context, question=query)
             response = await self.llm.ainvoke(prompt)
+            answer_text = response.content
             
-            logger.info(f"Generated answer {response} for query: {query}...")
+            logger.info(f"Generated answer for query: {query[:50]}...")
             
             return {
-                "answer": response,
+                "answer": answer_text,
                 "is_last_step": True
             }
             

@@ -31,7 +31,7 @@ class DocumentRetriever:
         """
         try:
             vectorstore = await self.pg_document_service.init_pgvector()
-            docs = await vectorstore.asimilarity_search_by_vector(query, k=k)
+            docs = await vectorstore.asimilarity_search(query, k=k)
             
             results = []
             for doc in docs:
@@ -48,8 +48,8 @@ class DocumentRetriever:
             return []
 
 
-@tool(response_format="content_and_artifact")
-async def retrieve_documents(query: str, k: int = 5) -> Tuple[List[str], List[dict]]:
+@tool("retrieve_documents")
+async def retrieve_documents(query: str, k: int = 5) -> dict:
     """
     Retrieve documents related to a query from the vector store.
     
@@ -58,15 +58,16 @@ async def retrieve_documents(query: str, k: int = 5) -> Tuple[List[str], List[di
         k: Number of documents to retrieve (default: 5)
         
     Returns:
-        Tuple: (list of document contents, list of metadata)
+        Dict with documents list
     """
     retriever = DocumentRetriever()
     documents = await retriever.get_relevant_documents(query, k)
     
     if not documents:
-        return [], []
+        return {"documents": []}
     
     content = [doc["content"] for doc in documents]
-    metadata = [doc["metadata"] for doc in documents]
     
-    return content, metadata
+    return {
+        "documents": content,
+    }

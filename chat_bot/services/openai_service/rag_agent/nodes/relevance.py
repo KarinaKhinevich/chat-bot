@@ -8,10 +8,10 @@ from typing import Dict, Any
 
 from langchain.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI
+from langchain_core.messages import AIMessage
 from pydantic import BaseModel, Field   
 from chat_bot.config import OpenAISettings
 from ..state import State
-from ..tools import retrieve_documents
 
 logger = logging.getLogger(__name__)
 
@@ -66,20 +66,12 @@ Response:"""
             state: Current state containing query and documents
             
         Returns:
-            Updated state with relevance information
+            Boolean indicating if documents are relevant
         """
         try:
             query = state.get("input", "")
             
-            # Retrieve documents if not already retrieved
-            if not state.get("documents"):
-                logger.info("No documents in state, retrieving...")
-                content, metadata = await retrieve_documents(query)
-                
-                # Update state with retrieved documents
-                state["documents"] = content
-                state["sources"] = [meta.get("filename", "Unknown") for meta in metadata]
-            
+            # Get documents from state - they should be populated by the retriever tool
             documents = state.get("documents", [])
             
             if not documents:
@@ -87,26 +79,22 @@ Response:"""
                 return False
             
             # Format documents for evaluation
-            formatted_docs = "\n\n".join([doc for doc in documents])
+            formatted_docs = "\n\n".join([str(doc) for doc in documents])
             
-            # Check relevance using LLM
-            prompt = self.relevance_prompt.format(
+            # Check relevance using LLM with proper prompt formatting
+            prompt_input = self.relevance_prompt.format(
                 query=query,
                 documents=formatted_docs
             )
             
-            relevance_checker = prompt | self.llm
-            response = await relevance_checker.ainvoke(prompt).relevance
-
-            #Update state with relevance result
-            state["is_relevant"] = response
-
-            return response
+            response = await self.llm.ainvoke(prompt_input)
+            is_relevant = response.relevance
+            logger.info(f"Relevance check result: {is_relevant}")
+            
+            return is_relevant
             
         except Exception as e:
             logger.error(f"Error in relevance checking: {str(e)}")
-            # Update state to indicate non-relevance on error
-            state["error_message"] = f"Error checking document relevance: {str(e)}"
             return False
     
     def relevance_passed_handler(self, state: State) -> Dict[str, Any]:
