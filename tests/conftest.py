@@ -149,3 +149,45 @@ def sample_txt_content():
         bytes: Mock text file content
     """
     return b"This is a sample text document for testing purposes. It contains some content to test the document processing functionality."
+
+
+@pytest.fixture
+def sample_chat_request():
+    """
+    Sample chat request for testing.
+
+    Returns:
+        dict: Sample chat request data
+    """
+    return {"question": "What is this document about?"}
+
+
+@pytest.fixture
+def sample_chat_response():
+    """
+    Sample chat response for testing.
+
+    Returns:
+        dict: Sample chat response data
+    """
+    return {
+        "answer": "This document is about testing the chat functionality.",
+        "sources": ["test_document.txt", "another_document.pdf"]
+    }
+
+
+@pytest.fixture
+def sample_document_metadata():
+    """
+    Sample document metadata for testing.
+
+    Returns:
+        dict: Sample metadata
+    """
+    return {
+        "document_id": "test-document-id",
+        "filename": "test.txt",
+        "content_type": "text/plain",
+        "chunk_index": 0,
+        "total_chunks": 1
+    }
