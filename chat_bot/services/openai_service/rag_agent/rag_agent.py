@@ -5,6 +5,7 @@ from langchain_core.messages import HumanMessage, AIMessage
 from langgraph.graph import StateGraph, START, END
 from langgraph.prebuilt import ToolNode
 from chat_bot.config import LangchainSettings
+from chat_bot.core.constants import RETRIEVAL_TOP_K
 from .nodes import Moderation, RelevanceChecker, AnswerGenerator
 from .state import State
 from .tools import retrieve_documents
@@ -230,7 +231,7 @@ class RAGAgent:
             # Initialize state with user input and retrieval parameters
             initial_state = {
                 "input": query, 
-                "retrieval_k": retrieval_k,
+                "retrieval_k": RETRIEVAL_TOP_K,
                 "messages": [HumanMessage(content=query)],
                  }
             # Compile and run the graph

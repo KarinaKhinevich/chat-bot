@@ -11,6 +11,7 @@ from langchain_openai import ChatOpenAI
 from langchain_core.messages import AIMessage
 from pydantic import BaseModel, Field   
 from chat_bot.config import OpenAISettings
+from chat_bot.core import RETRIEVAL_FAILED_MESSAGE
 from ..state import State
 
 logger = logging.getLogger(__name__)
@@ -106,6 +107,6 @@ Response:"""
         """Handle case where documents are not relevant."""
         logger.info("Documents are not relevant to the query")
         return {
-            "answer": "I couldn't find information in the uploaded documents that's relevant to your question. Please try asking about topics that are covered in your documents.",
+            "answer": RETRIEVAL_FAILED_MESSAGE,
             "is_last_step": True
         }

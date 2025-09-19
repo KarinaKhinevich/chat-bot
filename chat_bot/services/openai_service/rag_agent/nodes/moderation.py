@@ -3,7 +3,7 @@ import logging
 from langchain.chains import OpenAIModerationChain
 
 from chat_bot.config import OpenAISettings
-from chat_bot.core.constants import MODERATION_MESSAGE
+from chat_bot.core import MODERATION_MESSAGE
 from ..state import State
 
 logger = logging.getLogger(__name__)
