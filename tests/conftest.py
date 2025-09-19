@@ -172,7 +172,7 @@ def sample_chat_response():
     """
     return {
         "answer": "This document is about testing the chat functionality.",
-        "sources": ["test_document.txt", "another_document.pdf"]
+        "sources": ["test_document.txt", "another_document.pdf"],
     }
 
 
@@ -189,5 +189,5 @@ def sample_document_metadata():
         "filename": "test.txt",
         "content_type": "text/plain",
         "chunk_index": 0,
-        "total_chunks": 1
+        "total_chunks": 1,
     }
