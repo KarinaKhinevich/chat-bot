@@ -5,6 +5,7 @@ from typing import Any, Dict
 
 from langchain.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI
+from langdetect import detect
 
 from chat_bot.config import OpenAISettings
 
@@ -35,7 +36,8 @@ Context from documents:
 User Question: {question}
 
 Instructions:
-- Answer the same language as the question
+- You must always answer in the same language as the user's question, regardless of the language of the context.
+- User's question is in {language} language
 - Answer the question based only on the provided context
 - If the answer cannot be found in the context, say "I don't have enough information in the documents to answer that question."
 - Be concise but comprehensive in your response
@@ -59,6 +61,7 @@ Answer:"""
         try:
             query = state.get("input", "")
             documents = state.get("documents", [])
+            language = detect(query) if query else "en"
 
             if not documents:
                 logger.warning("No documents available for answer generation")
@@ -71,7 +74,7 @@ Answer:"""
             context = "\n\n".join([doc for doc in documents])
 
             # Generate answer using LLM
-            prompt = self.answer_prompt.format(context=context, question=query)
+            prompt = self.answer_prompt.format(context=context, question=query, language=language)
             response = await self.llm.ainvoke(prompt)
             answer_text = response.content
 
