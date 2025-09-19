@@ -9,6 +9,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from chat_bot.database import create_tables, get_db, pg_engine
 from chat_bot.document_processing import DocumentParser
 from chat_bot.schemas import (
+    ChatError,
+    ChatRequest,
+    ChatResponse,
     DocumentInfo,
     DocumentListResponse,
     DocumentUploadError,
@@ -16,6 +19,7 @@ from chat_bot.schemas import (
     HealthCheck,
 )
 from chat_bot.services import DocumentService, PGDocumentService, summarize_document
+from chat_bot.services.openai_service.chat_service import ChatService
 from chat_bot.utils import validate_file
 
 # Configure logging
@@ -84,6 +88,35 @@ async def upload_page(request: Request) -> HTMLResponse:
         HTMLResponse: Rendered upload page template
     """
     return templates.TemplateResponse(request, "upload.html")
+
+
+@router.get("/chat", response_class=HTMLResponse)
+async def chat_page(
+    request: Request, db: AsyncSession = Depends(get_db)
+) -> HTMLResponse:
+    """
+    Render the chat page.
+
+    Args:
+        request: The FastAPI request object
+        db: Async database session
+
+    Returns:
+        HTMLResponse: Rendered chat page template
+    """
+    try:
+        # Get document count for the chat page
+        document_service = DocumentService(db)
+        documents = await document_service.get_documents()
+        document_count = len(documents)
+
+        return templates.TemplateResponse(
+            request, "chat.html", {"document_count": document_count}
+        )
+    except Exception as e:
+        logger.error(f"Error loading chat page: {str(e)}")
+        # Fallback to 0 documents if there's an error
+        return templates.TemplateResponse(request, "chat.html", {"document_count": 0})
 
 
 @router.get(
@@ -331,4 +364,57 @@ async def delete_document(document_id: str, db: AsyncSession = Depends(get_db)):
         raise HTTPException(
             status_code=500,
             detail=f"Document {document_id} was deleted from main database, but failed to delete from vector store: {vector_error}",
+        )
+
+
+@router.post(
+    "/chat",
+    tags=["chat"],
+    summary="Ask a question about documents",
+    response_description="AI assistant's answer to the question",
+    status_code=status.HTTP_200_OK,
+    response_model=ChatResponse,
+    responses={
+        400: {"model": ChatError, "description": "Bad Request - Invalid question"},
+        500: {"model": ChatError, "description": "Internal server error"},
+    },
+)
+async def chat_question(
+    chat_request: ChatRequest, db: AsyncSession = Depends(get_db)
+) -> ChatResponse:
+    """
+    ## Ask a Question About Documents.
+
+    Send a question to the AI assistant about the uploaded documents.
+
+    **Example questions:**
+    - "What is this document about?"
+    - "Summarize the main points"
+    - "What are the key findings?"
+
+    Args:
+        chat_request: The chat request containing the question
+        db: Database session
+
+    Returns:
+        ChatResponse: The AI assistant's answer and sources
+
+    Raises:
+        HTTPException: If question processing fails
+    """
+    try:
+        # Initialize chat service with RAG agent
+        chat_service = ChatService()
+
+        # Process the question through RAG pipeline
+        answer, sources = await chat_service.ask_question(chat_request.question)
+
+        logger.info(f"Processed chat question: {chat_request.question[:50]}...")
+
+        return ChatResponse(answer=answer, sources=sources)
+
+    except Exception as e:
+        logger.error(f"Error processing chat question: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to process question: {str(e)}"
         )
