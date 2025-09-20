@@ -62,6 +62,11 @@ class PGDocumentService:
         """
         documents = self.chunker.index_document(page_content, metadata)
 
+        # Handle empty content gracefully
+        if not documents:
+            logger.info("No chunks generated from content (empty or invalid content)")
+            return
+
         # Use configurable batch sizes from settings
         BATCH_SIZE = chunking_settings.BATCH_SIZE
         SUB_BATCH_SIZE = chunking_settings.SUB_BATCH_SIZE
@@ -121,7 +126,7 @@ class PGDocumentService:
                 f"Document processing completed: {processed_chunks}/{total_chunks} chunks successfully added to vector store"
             )
 
-            if processed_chunks == 0:
+            if processed_chunks == 0 and total_chunks > 0:
                 raise Exception("No chunks were successfully processed")
             elif processed_chunks < total_chunks:
                 logger.warning(
