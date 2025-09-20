@@ -1,7 +1,8 @@
 """Tests for chat service functionality."""
 
+from unittest.mock import AsyncMock, patch
+
 import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
 
 from chat_bot.services.chat_service import ChatService
 
@@ -12,7 +13,7 @@ class TestChatService:
     @pytest.mark.unit
     def test_chat_service_initialization(self):
         """Test ChatService initialization."""
-        with patch('chat_bot.services.chat_service.RAGAgent'):
+        with patch("chat_bot.services.chat_service.RAGAgent"):
             service = ChatService()
             assert service.rag_agent is not None
 
@@ -27,36 +28,41 @@ class TestChatService:
             "sources": ["document1.pdf", "document2.txt"],
             "moderated": False,
             "is_relevant": True,
-            "relevance_score": 0.85
+            "relevance_score": 0.85,
         }
         mock_rag_agent.invoke_agent.return_value = mock_result
 
-        with patch('chat_bot.services.chat_service.RAGAgent', return_value=mock_rag_agent):
+        with patch(
+            "chat_bot.services.chat_service.RAGAgent", return_value=mock_rag_agent
+        ):
             service = ChatService()
-            
+
             answer, sources = await service.ask_question("What is this about?")
-            
+
             assert answer == "This is a test answer"
             assert sources == ["document1.pdf", "document2.txt"]
-            mock_rag_agent.invoke_agent.assert_called_once_with("What is this about?", retrieval_k=5)
+            mock_rag_agent.invoke_agent.assert_called_once_with(
+                "What is this about?", retrieval_k=5
+            )
 
     @pytest.mark.unit
     @pytest.mark.asyncio
     async def test_ask_question_with_custom_k(self):
         """Test question asking with custom retrieval k parameter."""
         mock_rag_agent = AsyncMock()
-        mock_result = {
-            "answer": "Test answer",
-            "sources": ["doc1.pdf"]
-        }
+        mock_result = {"answer": "Test answer", "sources": ["doc1.pdf"]}
         mock_rag_agent.invoke_agent.return_value = mock_result
 
-        with patch('chat_bot.services.chat_service.RAGAgent', return_value=mock_rag_agent):
+        with patch(
+            "chat_bot.services.chat_service.RAGAgent", return_value=mock_rag_agent
+        ):
             service = ChatService()
-            
+
             await service.ask_question("Test question", k=3)
-            
-            mock_rag_agent.invoke_agent.assert_called_once_with("Test question", retrieval_k=3)
+
+            mock_rag_agent.invoke_agent.assert_called_once_with(
+                "Test question", retrieval_k=3
+            )
 
     @pytest.mark.unit
     @pytest.mark.asyncio
@@ -69,12 +75,16 @@ class TestChatService:
         }
         mock_rag_agent.invoke_agent.return_value = mock_result
 
-        with patch('chat_bot.services.chat_service.RAGAgent', return_value=mock_rag_agent):
+        with patch(
+            "chat_bot.services.chat_service.RAGAgent", return_value=mock_rag_agent
+        ):
             service = ChatService()
-            
+
             answer, sources = await service.ask_question("What is this?")
-            
-            assert answer == "I'm sorry, I couldn't generate an answer to your question."
+
+            assert (
+                answer == "I'm sorry, I couldn't generate an answer to your question."
+            )
             assert sources == ["document1.pdf"]
 
     @pytest.mark.unit
@@ -88,11 +98,13 @@ class TestChatService:
         }
         mock_rag_agent.invoke_agent.return_value = mock_result
 
-        with patch('chat_bot.services.chat_service.RAGAgent', return_value=mock_rag_agent):
+        with patch(
+            "chat_bot.services.chat_service.RAGAgent", return_value=mock_rag_agent
+        ):
             service = ChatService()
-            
+
             answer, sources = await service.ask_question("Test question")
-            
+
             assert answer == "Test answer"
             assert sources == []
 
@@ -103,15 +115,17 @@ class TestChatService:
         mock_rag_agent = AsyncMock()
         mock_result = {
             "answer": "Test answer",
-            "sources": ["doc1.pdf", "doc2.txt", "doc1.pdf", "doc2.txt"]  # Duplicates
+            "sources": ["doc1.pdf", "doc2.txt", "doc1.pdf", "doc2.txt"],  # Duplicates
         }
         mock_rag_agent.invoke_agent.return_value = mock_result
 
-        with patch('chat_bot.services.chat_service.RAGAgent', return_value=mock_rag_agent):
+        with patch(
+            "chat_bot.services.chat_service.RAGAgent", return_value=mock_rag_agent
+        ):
             service = ChatService()
-            
+
             answer, sources = await service.ask_question("Test question")
-            
+
             assert answer == "Test answer"
             assert len(sources) == 2  # Duplicates removed
             assert "doc1.pdf" in sources
@@ -124,12 +138,14 @@ class TestChatService:
         mock_rag_agent = AsyncMock()
         mock_rag_agent.invoke_agent.side_effect = Exception("RAG agent failed")
 
-        with patch('chat_bot.services.chat_service.RAGAgent', return_value=mock_rag_agent):
+        with patch(
+            "chat_bot.services.chat_service.RAGAgent", return_value=mock_rag_agent
+        ):
             service = ChatService()
-            
+
             with pytest.raises(Exception) as exc_info:
                 await service.ask_question("Test question")
-            
+
             assert "Failed to process question" in str(exc_info.value)
 
     @pytest.mark.unit
@@ -137,16 +153,15 @@ class TestChatService:
     async def test_ask_question_empty_question(self):
         """Test asking an empty question."""
         mock_rag_agent = AsyncMock()
-        mock_result = {
-            "answer": "Please provide a valid question",
-            "sources": []
-        }
+        mock_result = {"answer": "Please provide a valid question", "sources": []}
         mock_rag_agent.invoke_agent.return_value = mock_result
 
-        with patch('chat_bot.services.chat_service.RAGAgent', return_value=mock_rag_agent):
+        with patch(
+            "chat_bot.services.chat_service.RAGAgent", return_value=mock_rag_agent
+        ):
             service = ChatService()
-            
+
             answer, sources = await service.ask_question("")
-            
+
             # The service should still work, letting validation happen at API level
             mock_rag_agent.invoke_agent.assert_called_once_with("", retrieval_k=5)

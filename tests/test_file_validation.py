@@ -1,12 +1,12 @@
 """Tests for utility functions."""
 
-import io
-import pytest
-from fastapi import HTTPException, UploadFile
 from unittest.mock import AsyncMock
 
-from chat_bot.utils.file_handler import validate_file
+import pytest
+from fastapi import HTTPException
+
 from chat_bot.core import DocumentTypeEnum
+from chat_bot.utils.file_handler import validate_file
 
 
 class TestFileValidation:
@@ -24,9 +24,9 @@ class TestFileValidation:
         mock_file.filename = "test.txt"
         mock_file.content_type = "text/plain"
         mock_file.size = len(sample_txt_content)
-        
+
         result = validate_file(mock_file)
-        
+
         assert result == DocumentTypeEnum.TXT
 
     @pytest.mark.unit
@@ -41,9 +41,9 @@ class TestFileValidation:
         mock_file.filename = "test.pdf"
         mock_file.content_type = "application/pdf"
         mock_file.size = len(sample_pdf_content)
-        
+
         result = validate_file(mock_file)
-        
+
         assert result == DocumentTypeEnum.PDF
 
     @pytest.mark.unit
@@ -53,10 +53,10 @@ class TestFileValidation:
         mock_file.filename = "test.jpg"
         mock_file.content_type = "image/jpeg"
         mock_file.size = 1000
-        
+
         with pytest.raises(HTTPException) as exc_info:
             validate_file(mock_file)
-        
+
         assert exc_info.value.status_code == 400
         assert "File type not supported" in exc_info.value.detail
 
@@ -67,10 +67,10 @@ class TestFileValidation:
         mock_file.filename = "large.txt"
         mock_file.content_type = "text/plain"
         mock_file.size = 11 * 1024 * 1024  # 11MB (over 10MB limit)
-        
+
         with pytest.raises(HTTPException) as exc_info:
             validate_file(mock_file)
-        
+
         assert exc_info.value.status_code == 413
         assert "File size too large" in exc_info.value.detail
 
@@ -81,10 +81,10 @@ class TestFileValidation:
         mock_file.filename = "test_file"  # No extension
         mock_file.content_type = "text/plain"
         mock_file.size = 1000
-        
+
         with pytest.raises(HTTPException) as exc_info:
             validate_file(mock_file)
-        
+
         assert exc_info.value.status_code == 400
 
     @pytest.mark.unit
@@ -94,10 +94,10 @@ class TestFileValidation:
         mock_file.filename = ""
         mock_file.content_type = "text/plain"
         mock_file.size = 1000
-        
+
         with pytest.raises(HTTPException) as exc_info:
             validate_file(mock_file)
-        
+
         assert exc_info.value.status_code == 400
 
     @pytest.mark.unit
@@ -107,10 +107,10 @@ class TestFileValidation:
         mock_file.filename = None
         mock_file.content_type = "text/plain"
         mock_file.size = 1000
-        
+
         with pytest.raises((HTTPException, TypeError)) as exc_info:
             validate_file(mock_file)
-        
+
         # Either HTTPException or TypeError is acceptable
         if isinstance(exc_info.value, HTTPException):
             assert exc_info.value.status_code == 400
@@ -125,15 +125,15 @@ class TestFileValidation:
         mock_file.filename = "test.PDF"
         mock_file.content_type = "application/pdf"
         mock_file.size = 1000
-        
+
         result = validate_file(mock_file)
         assert result == DocumentTypeEnum.PDF
-        
+
         # Test uppercase TXT
         mock_file.filename = "test.TXT"
         mock_file.content_type = "text/plain"
         mock_file.size = 1000
-        
+
         result = validate_file(mock_file)
         assert result == DocumentTypeEnum.TXT
 
@@ -144,7 +144,7 @@ class TestFileValidation:
         mock_file.filename = "empty.txt"
         mock_file.content_type = "text/plain"
         mock_file.size = 0
-        
+
         # Should allow empty files (they might still be valid)
         result = validate_file(mock_file)
         assert result == DocumentTypeEnum.TXT
@@ -156,7 +156,7 @@ class TestFileValidation:
         mock_file.filename = "test.txt"
         mock_file.content_type = "application/pdf"  # Mismatched
         mock_file.size = 1000
-        
+
         # The validation is based on content type, so this should return PDF
         result = validate_file(mock_file)
         assert result == DocumentTypeEnum.PDF

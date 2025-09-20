@@ -160,10 +160,10 @@ class TestRoutes:
             client: FastAPI test client fixture
         """
         chat_request = {"question": "What is this document about?"}
-        
+
         # Note: This will likely fail due to OpenAI dependency, but tests the route structure
         response = client.post("/chat", json=chat_request)
-        
+
         # Should not be 404 (route exists) or 422 (validation error)
         assert response.status_code != status.HTTP_404_NOT_FOUND
         assert response.status_code != status.HTTP_422_UNPROCESSABLE_ENTITY

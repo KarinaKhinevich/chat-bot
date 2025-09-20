@@ -54,8 +54,14 @@ class ChatService:
                 f"RAG pipeline completed: moderated={moderated}, relevant={is_relevant}, score={relevance_score}"
             )
 
-            # Filter out duplicate sources
-            unique_sources = list(set(sources)) if sources else []
+            # Filter out duplicate sources while preserving order
+            unique_sources = []
+            if sources:
+                seen = set()
+                for source in sources:
+                    if source not in seen:
+                        seen.add(source)
+                        unique_sources.append(source)
 
             return answer, unique_sources
 

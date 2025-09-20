@@ -6,23 +6,50 @@ A modern FastAPI-based document processing system with vector search capabilitie
 
 - [Features](#features)
 - [Tech Stack](#tech-stack)
+  - [Backend](#backend)
+  - [Database](#database)
+  - [Frontend](#frontend)
+  - [DevOps](#devops)
 - [Prerequisites](#prerequisites)
 - [Installation & Setup](#installation--setup)
+  - [1. Clone the Repository](#1-clone-the-repository)
+  - [2. Environment Configuration](#2-environment-configuration)
+  - [3. Using Docker (Recommended)](#3-using-docker-recommended)
+  - [4. Development Setup](#4-development-setup)
 - [Usage](#usage)
   - [Web Interface](#web-interface)
   - [Chat Interface](#chat-interface)
   - [API Usage](#api-usage)
 - [API Documentation](#api-documentation)
+  - [Interactive API Documentation](#interactive-api-documentation)
+  - [Core Endpoints](#core-endpoints)
+  - [Response Examples](#response-examples)
 - [Testing](#testing)
+  - [Comprehensive Test Coverage](#comprehensive-test-coverage)
+  - [Coverage Metrics](#coverage-metrics)
+  - [Testing Best Practices](#testing-best-practices)
 - [Project Structure](#project-structure)
 - [Document Processing Pipeline](#document-processing-pipeline)
+  - [Processing Steps](#processing-steps)
 - [RAG Pipeline](#rag-pipeline)
+  - [RAG Architecture](#rag-architecture)
+  - [Pipeline Stages](#pipeline-stages)
 - [Deployment](#deployment)
+  - [Docker Deployment](#docker-deployment)
 - [Configuration](#configuration)
+  - [Environment Variables](#environment-variables)
+  - [Development Tools](#development-tools)
 - [Monitoring & Health](#monitoring--health)
-- [Troubleshooting](#troubleshooting)
+  - [Health Check Endpoint](#health-check-endpoint)
+  - [Application Metrics](#application-metrics)
+  - [Logging](#logging)
 - [Known Limitations & Future Development](#known-limitations--future-development)
+  - [Current Limitations](#current-limitations)
+  - [Planned Improvements](#planned-improvements)
 - [Contributing](#contributing)
+  - [Development Workflow](#development-workflow)
+  - [Code Style](#code-style)
+  - [Testing Requirements](#testing-requirements)
 
 ## Features
 
@@ -641,6 +668,13 @@ docker-compose logs db
 - **Data Integrity**: Potential inconsistency between PostgreSQL and vector store
 - **Cleanup Limitations**: Manual intervention needed for orphaned data
 
+#### **Document Processing Performance**
+- **Large File Upload Speed**: Current synchronous processing makes large file uploads slow
+- **Sequential Processing**: Documents are processed step-by-step rather than in parallel
+- **Token Limit Handling**: Large documents may require multiple API calls, increasing processing time
+- **No Progress Indicators**: Users cannot track upload progress for large files
+- **Memory Usage**: Large files are fully loaded into memory during processing
+
 #### **Monitoring & Evaluation**
 - **No User Feedback**: Missing feedback collection for chat responses
 - **Limited Analytics**: Basic logging without comprehensive performance metrics
@@ -720,6 +754,39 @@ docker-compose logs db
    - Document versioning and change tracking
    - Batch document processing capabilities
    - Document relationship mapping
+
+#### **Phase 3.5: Document Upload Performance Optimization**
+1. **Asynchronous Processing Pipeline**
+   ```python
+   # Background task processing for large documents
+   from celery import Celery
+   
+   @celery.task
+   async def process_document_async(document_id: str, file_path: str):
+       # Process document in background
+       # Update status in database
+       # Notify user when complete
+   ```
+
+2. **Streaming and Progressive Processing**
+   ```python
+   # Stream large files for memory efficiency
+   async def stream_process_document(file_stream):
+       chunk_buffer = []
+       async for chunk in file_stream:
+           chunk_buffer.append(chunk)
+           if len(chunk_buffer) >= BUFFER_SIZE:
+               await process_chunks_batch(chunk_buffer)
+               chunk_buffer.clear()
+   ```
+
+3. **Performance Enhancements**
+   - Real-time upload progress tracking with WebSocket connections
+   - Parallel embedding generation for multiple chunks
+   - Intelligent chunking optimization based on document type
+   - Memory-efficient streaming for large file processing
+   - Background task queue for CPU-intensive operations
+   - Caching mechanisms for repeated processing operations
 
 #### **Phase 4: Monitoring & Evaluation**
 1. **LangSmith Integration**

@@ -3,6 +3,7 @@
 import logging
 from typing import Dict, List, Optional
 
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_core.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
@@ -48,7 +49,7 @@ class DocumentStructure(BaseModel):
 
 
 class Summarizer:
-    """Document summarization service with structured analysis."""
+    """Document summarization service with structured analysis and chunking support."""
 
     def __init__(self):
         """Initialize the summarizer with structured output capability."""
@@ -59,6 +60,20 @@ class Summarizer:
                 model=openai_settings.MODEL_NAME,
                 temperature=0.1,  # Low temperature for consistent structure
             ).with_structured_output(DocumentStructure)
+
+            # Regular LLM for chunk summarization
+            self.summary_llm = ChatOpenAI(
+                api_key=openai_settings.API_KEY,
+                model=openai_settings.MODEL_NAME,
+                temperature=0.1,
+            )
+
+            # Text splitter for large documents
+            self.text_splitter = RecursiveCharacterTextSplitter(
+                chunk_size=15000,  # ~15k chars = ~3750 tokens (safe for 30k limit)
+                chunk_overlap=1000,  # Overlap to maintain context
+                length_function=len,
+            )
 
             # Prompt for structured analysis
             self.analysis_prompt = PromptTemplate.from_template(
@@ -76,6 +91,40 @@ Instructions:
 - Identify any conclusion or final thoughts
 
 Analyze the document thoroughly and provide a structured breakdown of its content."""
+            )
+
+            # Prompt for chunk summarization
+            self.chunk_summary_prompt = PromptTemplate.from_template(
+                """Summarize the following document chunk while preserving all important information:
+
+{chunk_content}
+
+Provide a comprehensive summary that includes:
+- Main topics covered in this section
+- Key facts, concepts, or arguments
+- Important details or data
+- Any conclusions or findings
+
+IMPORTANT: The summary should be in the same language as the input chunk.
+Summary:"""
+            )
+
+            # Prompt for combining chunk summaries
+            self.combine_summaries_prompt = PromptTemplate.from_template(
+                """You are combining multiple summaries of chunks from the same document. Create a comprehensive, unified summary.
+
+Document chunk summaries:
+{summaries}
+
+Instructions:\
+- Combine all chunk summaries into one cohesive summary
+- Eliminate redundancy while preserving all important information
+- Maintain logical flow and structure
+- Keep the same language as the original summaries
+- Ensure all key concepts and main points are included
+
+IMPORTANT: The final summary should be in the same language as the input summaries.
+Unified Summary:"""
             )
 
         except Exception as e:
@@ -183,6 +232,8 @@ Analyze the document thoroughly and provide a structured breakdown of its conten
         """
         Perform complete document summarization with structured analysis.
 
+        Handles large documents by chunking them if they exceed token limits.
+
         This method combines structured document analysis with comprehensive
         summary generation to produce high-quality summaries.
 
@@ -210,14 +261,27 @@ Analyze the document thoroughly and provide a structured breakdown of its conten
                 # For very short documents, return the content as-is with minimal formatting
                 return f"**Summary:** {content.strip()}"
 
-            # Step 1: Analyze document structure
-            analysis = await self.analyze_document_structure(content)
+            # Estimate token count (rough approximation: 1 token ≈ 4 characters)
+            estimated_tokens = len(content) / 4
+
+            # Step 1: Analyze document structure (with chunking if needed)
+            if estimated_tokens <= 20000:  # Safe limit considering prompt overhead
+                logger.info("Document is small enough for direct processing")
+                analysis = await self.analyze_document_structure(content)
+            else:
+                logger.info("Document is large, using chunking approach")
+                analysis = await self._analyze_large_document(content)
 
             # Step 2: Combine analysis into summary using Python
             final_summary = self.combine_analysis_to_summary(analysis)
 
             logger.info("Enhanced document summarization completed successfully")
             return final_summary
+
+        except Exception as e:
+            logger.error(f"Error during document summarization: {str(e)}")
+            # Return a basic fallback summary to prevent complete failure
+            return f"**Summary:** Document analysis failed. Content preview: {content[:500]}..."
 
         except ValueError as ve:
             logger.error(f"Validation error in document summarization: {str(ve)}")
@@ -237,3 +301,41 @@ Analyze the document thoroughly and provide a structured breakdown of its conten
                     f"Fallback summarization also failed: {str(fallback_error)}"
                 )
                 raise Exception(f"Document summarization failed: {str(e)}")
+
+    async def _analyze_large_document(self, content: str) -> DocumentStructure:
+        """Analyze large documents by chunking and combining results."""
+        try:
+            # Split document into chunks
+            chunks = self.text_splitter.split_text(content)
+            logger.info(f"Split document into {len(chunks)} chunks")
+
+            # Summarize each chunk
+            chunk_summaries = []
+            for i, chunk in enumerate(chunks):
+                try:
+                    logger.info(f"Processing chunk {i+1}/{len(chunks)}")
+                    prompt = self.chunk_summary_prompt.format(chunk_content=chunk)
+                    summary = await self.summary_llm.ainvoke(prompt)
+                    chunk_summaries.append(summary.content)
+                except Exception as e:
+                    logger.error(f"Failed to summarize chunk {i+1}: {str(e)}")
+                    # Continue with other chunks even if one fails
+                    chunk_summaries.append(f"[Summary failed for chunk {i+1}]")
+
+            # Combine all chunk summaries
+            combined_summaries = "\n\n".join(chunk_summaries)
+            logger.info("Combining chunk summaries into unified summary")
+
+            # Create a comprehensive summary from all chunks
+            combine_prompt = self.combine_summaries_prompt.format(
+                summaries=combined_summaries
+            )
+            unified_summary = await self.summary_llm.ainvoke(combine_prompt)
+
+            # Now analyze the unified summary for structure
+            logger.info("Analyzing unified summary for document structure")
+            return await self.analyze_document_structure(unified_summary.content)
+
+        except Exception as e:
+            logger.error(f"Failed to analyze large document: {str(e)}")
+            raise
