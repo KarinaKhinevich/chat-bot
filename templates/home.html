@@ -54,37 +54,6 @@
                             </div>
                         </div>
 
-                        <!-- System Status -->
-                        <div class="card shadow-sm mb-4">
-                            <div class="card-header">
-                                <h6 class="mb-0">
-                                    <i class="bi bi-activity me-2"></i>
-                                    System Status
-                                </h6>
-                            </div>
-                            <div class="card-body">
-                                <div class="d-flex align-items-center justify-content-between">
-                                    <div class="d-flex align-items-center">
-                                        <span class="badge bg-success me-2">
-                                            <i class="bi bi-check-circle"></i>
-                                        </span>
-                                        <span>API Server</span>
-                                    </div>
-                                    <small class="text-muted">Online</small>
-                                </div>
-                                <hr class="my-2">
-                                <div class="d-flex align-items-center justify-content-between">
-                                    <div class="d-flex align-items-center">
-                                        <span class="badge bg-success me-2">
-                                            <i class="bi bi-check-circle"></i>
-                                        </span>
-                                        <span>File Upload</span>
-                                    </div>
-                                    <small class="text-muted">Ready</small>
-                                </div>
-                            </div>
-                        </div>
-
                         <!-- API Documentation -->
                         <div class="text-center">
                             <a href="/docs" class="btn btn-outline-secondary me-2">
@@ -101,7 +70,7 @@
                     <!-- Right Column: Documents List -->
                     <div class="col-lg-5">
                         {% if documents %}
-                        <div class="card shadow-sm" style="height: 100%;">
+                        <div class="card shadow-sm" style="height: 500px;">
                             <div class="card-header">
                                 <h6 class="mb-0">
                                     <i class="bi bi-files me-2"></i>
@@ -150,7 +119,7 @@
                             </div>
                         </div>
                         {% else %}
-                        <div class="card shadow-sm" style="height: 100%;">
+                        <div class="card shadow-sm" style="height: 500px;">
                             <div class="card-body text-center d-flex flex-column justify-content-center">
                                 <i class="bi bi-inbox display-1 text-muted mb-4"></i>
                                 <h5 class="card-title">No Documents</h5>

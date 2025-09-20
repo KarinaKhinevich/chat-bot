@@ -70,6 +70,8 @@ class ChunkingSettings(BaseSettings):
     MODEL_NAME: str = "text-embedding-3-small"
     CHUNK_SIZE: int = 500
     OVERLAP_SIZE: int = 50
+    BATCH_SIZE: int = 50  # Number of chunks to process in each embedding batch
+    SUB_BATCH_SIZE: int = 10  # Fallback batch size for failed batches
 
     class Config:
         """Pydantic configuration for environment variable prefix."""

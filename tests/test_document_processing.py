@@ -1,8 +1,9 @@
 """Tests for document processing functionality."""
 
+from unittest.mock import AsyncMock
+
 import pytest
-from unittest.mock import AsyncMock, MagicMock
-from fastapi import HTTPException, UploadFile
+from fastapi import HTTPException
 
 from chat_bot.core import DocumentTypeEnum
 from chat_bot.document_processing import DocumentParser
@@ -16,7 +17,7 @@ class TestDocumentParser:
     def test_parser_initialization(self):
         """Test that DocumentParser initializes with correct parsers."""
         parser = DocumentParser()
-        
+
         assert DocumentTypeEnum.PDF in parser._parsers
         assert DocumentTypeEnum.TXT in parser._parsers
         assert isinstance(parser._parsers[DocumentTypeEnum.PDF], PDFParser)
@@ -32,7 +33,7 @@ class TestDocumentParser:
             sample_txt_content: Sample text content fixture
         """
         parser = DocumentParser()
-        
+
         # Create mock file
         mock_file = AsyncMock()
         mock_file.filename = "test.txt"
@@ -51,16 +52,16 @@ class TestDocumentParser:
     async def test_parse_unsupported_document_type(self):
         """Test parsing with unsupported document type."""
         parser = DocumentParser()
-        
+
         mock_file = AsyncMock()
         mock_file.filename = "test.unknown"
-        
+
         # Create a mock document type that's not supported
         class UnsupportedType:
             value = "unknown"
-        
+
         unsupported_type = UnsupportedType()
-        
+
         with pytest.raises(TypeError):
             await parser.parse(mock_file, unsupported_type)
 
@@ -69,17 +70,19 @@ class TestDocumentParser:
     async def test_parse_with_parser_error(self):
         """Test parsing when underlying parser raises an error."""
         parser = DocumentParser()
-        
+
         # Mock the TXT parser to raise an exception
         parser._parsers[DocumentTypeEnum.TXT] = AsyncMock()
-        parser._parsers[DocumentTypeEnum.TXT].parse.side_effect = Exception("Parser error")
-        
+        parser._parsers[DocumentTypeEnum.TXT].parse.side_effect = Exception(
+            "Parser error"
+        )
+
         mock_file = AsyncMock()
         mock_file.filename = "test.txt"
-        
+
         with pytest.raises(HTTPException) as exc_info:
             await parser.parse(mock_file, DocumentTypeEnum.TXT)
-        
+
         assert exc_info.value.status_code == 500
         assert "Internal parsing error" in str(exc_info.value.detail)
 
@@ -97,7 +100,7 @@ class TestTXTParser:
             sample_txt_content: Sample text content fixture
         """
         parser = TXTParser()
-        
+
         mock_file = AsyncMock()
         mock_file.filename = "test.txt"
         mock_file.content_type = "text/plain"
@@ -116,7 +119,7 @@ class TestTXTParser:
     async def test_txt_parser_empty_file(self):
         """Test TXT parser with empty file."""
         parser = TXTParser()
-        
+
         mock_file = AsyncMock()
         mock_file.filename = "empty.txt"
         mock_file.content_type = "text/plain"
@@ -150,7 +153,7 @@ class TestPDFParser:
             sample_pdf_content: Sample PDF content fixture
         """
         parser = PDFParser()
-        
+
         mock_file = AsyncMock()
         mock_file.filename = "test.pdf"
         mock_file.content_type = "application/pdf"

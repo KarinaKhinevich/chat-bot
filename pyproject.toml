@@ -26,6 +26,7 @@ dependencies = [
     "langchain-postgres (>=0.0.15,<0.0.16)",
     "psycopg[binary] (>=3.2.10,<4.0.0)",
     "langgraph (>=0.6.7,<0.7.0)",
+    "langdetect (>=1.0.9,<2.0.0)",
 ]
 
 [tool.poetry]

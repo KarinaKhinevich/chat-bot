@@ -49,10 +49,31 @@ class TXTParser(BaseParser):
             # Detect encoding using chardet library
             encoding_info = chardet.detect(file_bytes)
             detected_encoding = encoding_info.get("encoding", "utf-8")
+            confidence = encoding_info.get("confidence", 0)
 
-            # Decode content
+            # Decode content with improved encoding handling
             try:
-                page_content = file_bytes.decode(detected_encoding, errors="ignore")
+                # If confidence is low or encoding is MacRoman, try UTF-8 first
+                if confidence < 0.8 or detected_encoding == "MacRoman":
+                    try:
+                        page_content = file_bytes.decode("utf-8")
+                        logger.info(
+                            f"Successfully decoded {document.filename} as UTF-8 (overriding {detected_encoding})"
+                        )
+                    except UnicodeDecodeError:
+                        # Fallback to detected encoding
+                        page_content = file_bytes.decode(
+                            detected_encoding, errors="ignore"
+                        )
+                        logger.info(
+                            f"Used detected encoding {detected_encoding} for {document.filename}"
+                        )
+                else:
+                    page_content = file_bytes.decode(detected_encoding, errors="ignore")
+                    logger.info(
+                        f"Used detected encoding {detected_encoding} for {document.filename}"
+                    )
+
             except (UnicodeDecodeError, LookupError) as e:
                 logger.warning(
                     f"Failed to decode with {detected_encoding}, falling back to UTF-8: {e}"

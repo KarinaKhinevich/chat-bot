@@ -157,7 +157,9 @@ class TestDocumentUpload:
         # Make summary generation fail
         mock_summarizer_instance = AsyncMock()
         mock_summarizer.return_value = mock_summarizer_instance
-        mock_summarizer_instance.summarize_document.side_effect = Exception("Summary generation failed")
+        mock_summarizer_instance.summarize_document.side_effect = Exception(
+            "Summary generation failed"
+        )
 
         mock_pg_service_instance = AsyncMock()
         mock_pg_service.return_value = mock_pg_service_instance
