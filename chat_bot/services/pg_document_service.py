@@ -50,7 +50,7 @@ class PGDocumentService:
     ):
         """
         Create a new document in the vector table in the database.
-        
+
         Handles large documents by batching chunks to avoid API limits.
 
         Args:
@@ -61,45 +61,55 @@ class PGDocumentService:
             HTTPException: If document creation fails
         """
         documents = self.chunker.index_document(page_content, metadata)
-        
+
         # Use configurable batch sizes from settings
         BATCH_SIZE = chunking_settings.BATCH_SIZE
         SUB_BATCH_SIZE = chunking_settings.SUB_BATCH_SIZE
-        
+
         try:
             vectorstore = await self.init_pgvector()
-            
+
             # Process documents in batches
             total_chunks = len(documents)
             processed_chunks = 0
-            
+
             for i in range(0, total_chunks, BATCH_SIZE):
-                batch = documents[i:i + BATCH_SIZE]
+                batch = documents[i : i + BATCH_SIZE]  # noqa: E203
                 batch_size = len(batch)
-                
-                logger.info(f"Processing batch {i//BATCH_SIZE + 1}: {batch_size} chunks "
-                           f"(chunks {i+1}-{min(i+batch_size, total_chunks)} of {total_chunks})")
-                
+
+                logger.info(
+                    f"Processing batch {i//BATCH_SIZE + 1}: {batch_size} chunks "
+                    f"(chunks {i+1}-{min(i+batch_size, total_chunks)} of {total_chunks})"
+                )
+
                 try:
                     await vectorstore.aadd_documents(documents=batch)
                     processed_chunks += batch_size
                     logger.info(f"Successfully processed batch of {batch_size} chunks")
-                    
+
                 except Exception as batch_error:
-                    logger.error(f"Failed to process batch {i//BATCH_SIZE + 1}: {str(batch_error)}")
-                    
+                    logger.error(
+                        f"Failed to process batch {i//BATCH_SIZE + 1}: {str(batch_error)}"
+                    )
+
                     # Try smaller batches if current batch fails
                     if batch_size > SUB_BATCH_SIZE:
-                        logger.info(f"Retrying with smaller sub-batches of size {SUB_BATCH_SIZE}...")
-                        
+                        logger.info(
+                            f"Retrying with smaller sub-batches of size {SUB_BATCH_SIZE}..."
+                        )
+
                         for j in range(0, batch_size, SUB_BATCH_SIZE):
-                            sub_batch = batch[j:j + SUB_BATCH_SIZE]
+                            sub_batch = batch[j : j + SUB_BATCH_SIZE]  # noqa: E203
                             try:
                                 await vectorstore.aadd_documents(documents=sub_batch)
                                 processed_chunks += len(sub_batch)
-                                logger.info(f"Successfully processed sub-batch of {len(sub_batch)} chunks")
+                                logger.info(
+                                    f"Successfully processed sub-batch of {len(sub_batch)} chunks"
+                                )
                             except Exception as sub_error:
-                                logger.error(f"Failed to process sub-batch: {str(sub_error)}")
+                                logger.error(
+                                    f"Failed to process sub-batch: {str(sub_error)}"
+                                )
                                 # Continue with next sub-batch rather than failing completely
                                 continue
                     else:
@@ -107,13 +117,17 @@ class PGDocumentService:
                         logger.error(f"Skipping failed batch of {batch_size} chunks")
                         continue
 
-            logger.info(f"Document processing completed: {processed_chunks}/{total_chunks} chunks successfully added to vector store")
-            
+            logger.info(
+                f"Document processing completed: {processed_chunks}/{total_chunks} chunks successfully added to vector store"
+            )
+
             if processed_chunks == 0:
                 raise Exception("No chunks were successfully processed")
             elif processed_chunks < total_chunks:
-                logger.warning(f"Partial success: {processed_chunks}/{total_chunks} chunks processed")
-            
+                logger.warning(
+                    f"Partial success: {processed_chunks}/{total_chunks} chunks processed"
+                )
+
         except Exception as e:
             logger.error(f"Failed to save document to vector database: {str(e)}")
             raise HTTPException(

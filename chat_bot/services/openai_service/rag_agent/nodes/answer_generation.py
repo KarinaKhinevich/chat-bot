@@ -74,7 +74,9 @@ Answer:"""
             context = "\n\n".join([doc for doc in documents])
 
             # Generate answer using LLM
-            prompt = self.answer_prompt.format(context=context, question=query, language=language)
+            prompt = self.answer_prompt.format(
+                context=context, question=query, language=language
+            )
             response = await self.llm.ainvoke(prompt)
             answer_text = response.content
 

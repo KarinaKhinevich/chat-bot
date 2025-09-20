@@ -57,15 +57,23 @@ class TXTParser(BaseParser):
                 if confidence < 0.8 or detected_encoding == "MacRoman":
                     try:
                         page_content = file_bytes.decode("utf-8")
-                        logger.info(f"Successfully decoded {document.filename} as UTF-8 (overriding {detected_encoding})")
+                        logger.info(
+                            f"Successfully decoded {document.filename} as UTF-8 (overriding {detected_encoding})"
+                        )
                     except UnicodeDecodeError:
                         # Fallback to detected encoding
-                        page_content = file_bytes.decode(detected_encoding, errors="ignore")
-                        logger.info(f"Used detected encoding {detected_encoding} for {document.filename}")
+                        page_content = file_bytes.decode(
+                            detected_encoding, errors="ignore"
+                        )
+                        logger.info(
+                            f"Used detected encoding {detected_encoding} for {document.filename}"
+                        )
                 else:
                     page_content = file_bytes.decode(detected_encoding, errors="ignore")
-                    logger.info(f"Used detected encoding {detected_encoding} for {document.filename}")
-                    
+                    logger.info(
+                        f"Used detected encoding {detected_encoding} for {document.filename}"
+                    )
+
             except (UnicodeDecodeError, LookupError) as e:
                 logger.warning(
                     f"Failed to decode with {detected_encoding}, falling back to UTF-8: {e}"

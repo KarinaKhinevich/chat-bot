@@ -231,6 +231,7 @@ Unified Summary:"""
     async def summarize_document(self, content: str) -> str:
         """
         Perform complete document summarization with structured analysis.
+
         Handles large documents by chunking them if they exceed token limits.
 
         This method combines structured document analysis with comprehensive
@@ -326,7 +327,9 @@ Unified Summary:"""
             logger.info("Combining chunk summaries into unified summary")
 
             # Create a comprehensive summary from all chunks
-            combine_prompt = self.combine_summaries_prompt.format(summaries=combined_summaries)
+            combine_prompt = self.combine_summaries_prompt.format(
+                summaries=combined_summaries
+            )
             unified_summary = await self.summary_llm.ainvoke(combine_prompt)
 
             # Now analyze the unified summary for structure
