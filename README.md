@@ -668,6 +668,13 @@ docker-compose logs db
 - **Data Integrity**: Potential inconsistency between PostgreSQL and vector store
 - **Cleanup Limitations**: Manual intervention needed for orphaned data
 
+#### **Document Processing Performance**
+- **Large File Upload Speed**: Current synchronous processing makes large file uploads slow
+- **Sequential Processing**: Documents are processed step-by-step rather than in parallel
+- **Token Limit Handling**: Large documents may require multiple API calls, increasing processing time
+- **No Progress Indicators**: Users cannot track upload progress for large files
+- **Memory Usage**: Large files are fully loaded into memory during processing
+
 #### **Monitoring & Evaluation**
 - **No User Feedback**: Missing feedback collection for chat responses
 - **Limited Analytics**: Basic logging without comprehensive performance metrics
@@ -747,6 +754,39 @@ docker-compose logs db
    - Document versioning and change tracking
    - Batch document processing capabilities
    - Document relationship mapping
+
+#### **Phase 3.5: Document Upload Performance Optimization**
+1. **Asynchronous Processing Pipeline**
+   ```python
+   # Background task processing for large documents
+   from celery import Celery
+   
+   @celery.task
+   async def process_document_async(document_id: str, file_path: str):
+       # Process document in background
+       # Update status in database
+       # Notify user when complete
+   ```
+
+2. **Streaming and Progressive Processing**
+   ```python
+   # Stream large files for memory efficiency
+   async def stream_process_document(file_stream):
+       chunk_buffer = []
+       async for chunk in file_stream:
+           chunk_buffer.append(chunk)
+           if len(chunk_buffer) >= BUFFER_SIZE:
+               await process_chunks_batch(chunk_buffer)
+               chunk_buffer.clear()
+   ```
+
+3. **Performance Enhancements**
+   - Real-time upload progress tracking with WebSocket connections
+   - Parallel embedding generation for multiple chunks
+   - Intelligent chunking optimization based on document type
+   - Memory-efficient streaming for large file processing
+   - Background task queue for CPU-intensive operations
+   - Caching mechanisms for repeated processing operations
 
 #### **Phase 4: Monitoring & Evaluation**
 1. **LangSmith Integration**
